@@ -14,13 +14,13 @@ Buka https://hurahurafestival.github.io/mailnews/ atau jalankan `index.html` mel
 - Halaman ringkasan artikel dengan tautan ke penerbit asli.
 - Jadwal dan skor pertandingan dari ESPN untuk Premier League, La Liga, Serie A, Bundesliga, dan Liga Champions.
 - Halaman detail pertandingan dengan statistik dan susunan pemain jika disediakan oleh ESPN.
-- Klasemen dibuka melalui halaman ESPN.
+- Klasemen liga ditampilkan sebagai tabel langsung di dalam mailnews.
 - Direktori 26 klub dan halaman profil, berita klub, stadion, serta skuad untuk klub yang didukung penyedia data.
 
 ## Catatan dan batasan
 - Koneksi internet diperlukan. RSS2JSON atau ESPN dapat membatasi permintaan atau tidak menyediakan data pada waktu tertentu.
 - Berita dan skuad bergantung pada layanan pihak ketiga; kegagalan layanan dapat membuat sebagian data tidak tampil.
-- Mailnews menampilkan ringkasan berita dan mengarahkan pembaca ke penerbit asli, bukan menyalin artikel penuh.
+- Kartu berita dan halaman artikel dibuka di mailnews; nama penerbit dan tautan sumber asli dicantumkan sebagai atribusi. Mailnews tidak menyalin artikel penuh.
 - Data skuad klub Indonesia belum terintegrasi. Pelatih hanya ditampilkan jika tersedia sumber terverifikasi.
 - Informasi stadion merupakan data referensi dan perlu diverifikasi kembali ke sumber resmi klub.
-- Klasemen saat ini belum ditampilkan sebagai tabel di dalam mailnews.
+- Klasemen bergantung pada endpoint ESPN dan dapat kosong atau berubah sesuai format data kompetisi.
