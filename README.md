@@ -13,6 +13,7 @@ Buka https://hurahurafestival.github.io/mailnews/ atau jalankan `index.html` mel
 - Pencarian berita dan filter kategori.
 - Halaman ringkasan artikel dengan tautan ke penerbit asli.
 - Jadwal dan skor pertandingan dari ESPN untuk Premier League, La Liga, Serie A, Bundesliga, dan Liga Champions.
+- Halaman detail pertandingan dengan statistik dan susunan pemain jika disediakan oleh ESPN.
 - Klasemen dibuka melalui halaman ESPN.
 - Direktori 26 klub dan halaman profil, berita klub, stadion, serta skuad untuk klub yang didukung penyedia data.
 
