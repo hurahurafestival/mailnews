@@ -12,6 +12,7 @@ Buka https://hurahurafestival.github.io/mailnews/ atau jalankan `index.html` mel
 - Berita otomatis dari Google News RSS melalui layanan RSS2JSON.
 - Pencarian berita dan filter kategori.
 - Cache berita otomatis selama 15 menit dan fallback ke berita tersimpan saat koneksi/API bermasalah.
+- Berita utama pilihan otomatis berdasarkan berita terbaru yang berhasil dimuat, dengan ringkasan dan atribusi sumber di halaman utama.
 - Rekomendasi berita terkait pada halaman artikel agar pembaca tetap menjelajah di mailnews.
 - Halaman ringkasan artikel dengan tautan ke penerbit asli.
 - Jadwal dan skor pertandingan dari ESPN untuk Premier League, La Liga, Serie A, Bundesliga, dan Liga Champions.
