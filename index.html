@@ -382,8 +382,18 @@ leagueSelect.value=currentStanding;
 let matchPollBusy=false,matchUpdatedAt=null,matchPendingLeague=null;
 async function fetchMatchData(url,timeout=12000){
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeout);
- try{const response=await fetch(url,{cache:'no-store',signal:controller.signal});if(!response.ok)throw Error('HTTP '+response.status);return await response.json()}
- finally{clearTimeout(timer)}
+ try{
+  const response=await fetch(url,{cache:'no-store',signal:controller.signal});
+  const raw=await response.text();let data={};
+  try{data=raw?JSON.parse(raw):{}}catch{data={message:raw.slice(0,240)}}
+  if(!response.ok){
+   const detail=data.details||data.errors||data.error||data.message||'';
+   const safe=typeof detail==='string'?detail:JSON.stringify(detail);
+   throw Error('HTTP '+response.status+(data.providerStatus?' (provider '+data.providerStatus+')':'')+(safe?' · '+safe.slice(0,260):''));
+  }
+  if(data.errors&&Object.keys(data.errors).length)throw Error(JSON.stringify(data.errors).slice(0,260));
+  return data;
+ }finally{clearTimeout(timer)}
 }
 function matchCardApi(f,league,label){
  const home=f.teams?.home||{},away=f.teams?.away||{},goals=f.goals||{},status=f.fixture?.status||{},when=f.fixture?.date;
@@ -427,7 +437,7 @@ async function loadMatches(league,silent=false){
    const espnStart=new Date(now),espnEnd=new Date(now);espnEnd.setDate(espnEnd.getDate()+7);
    const espnDate=d=>d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
    try{
-    const data=await fetchMatchData('https://site.api.espn.com/apis/site/v2/sports/soccer/'+encodeURIComponent(league)+'/scoreboard?dates='+espnDate(espnStart)+'-'+espnDate(espnEnd)+'&limit=100');
+    const data=await fetchMatchData('https://site.api.espn.com/apis/site/v2/sports/soccer/'+encodeURIComponent(league)+'/scoreboard?dates='+espnDate(espnStart)+'&limit=100');
     const events=data.events||[];
     if(events.length){
      provider='ESPN';
