@@ -241,7 +241,7 @@ async function loadStandings(league,force=false){
   return;
  }
  try{
-  const r=await fetch('https://site.api.espn.com/apis/v2/sports/soccer/'+encodeURIComponent(league)+'/standings');
+  const r=await fetch('https://site.api.espn.com/apis/v2/sports/soccer/'+encodeURIComponent(league)+'/standings',{cache:'no-store'});
   if(!r.ok)throw Error('Klasemen tidak tersedia');
   const data=await r.json(),entries=collectStandingEntries(data);
   if(!entries.length)throw Error('Penyedia tidak mengirim klasemen untuk kompetisi ini');
@@ -288,7 +288,7 @@ async function pollSelectedLeagueStandings(){
  standingsPollBusy=true;
  const league=currentStanding;
  try{
-  const response=await fetch('https://site.api.espn.com/apis/site/v2/sports/soccer/'+encodeURIComponent(league)+'/scoreboard?dates='+new Date().toISOString().slice(0,10).replace(/-/g,''));
+  const response=await fetch('https://site.api.espn.com/apis/site/v2/sports/soccer/'+encodeURIComponent(league)+'/scoreboard?dates='+new Date().toISOString().slice(0,10).replace(/-/g,''),{cache:'no-store'});
   if(!response.ok)throw Error('Skor belum tersedia');
   const data=await response.json();
   const events=data.events||[];
@@ -311,9 +311,9 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 
 populateStandingRegions();
 leagueSelect.value=currentStanding;
-let matchPollBusy=false,matchUpdatedAt=null;
+let matchPollBusy=false,matchUpdatedAt=null,matchPendingLeague=null;
 async function loadMatches(league,silent=false){
- if(matchPollBusy)return;
+ if(matchPollBusy){matchPendingLeague=league;return;}
  matchPollBusy=true;
  const box=$('#matchGrid');
  if(!silent){$('#matchStatus').textContent='Memuat '+(leagueNames[league]||league)+'…';box.innerHTML='<div class="skeleton"></div><div class="skeleton"></div>'}
@@ -352,7 +352,10 @@ async function loadMatches(league,silent=false){
   }
   $('#matchStatus').textContent='Sumber skor tidak tersedia';
   if(!silent)box.innerHTML='<div class="empty">Data dari sumber yang tersedia belum dapat diakses. Kami tidak menampilkan skor perkiraan. Coba perbarui lagi nanti.</div>';
- }finally{matchPollBusy=false}
+ }finally{
+  matchPollBusy=false;
+  if(matchPendingLeague){const next=matchPendingLeague;matchPendingLeague=null;if(next===currentLeague)loadMatches(next,true)}
+ }
 }
 setInterval(()=>{if(!$('#matchCenter').hidden&&document.visibilityState==='visible')loadMatches(currentLeague,true)},60*1000);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&!$('#matchCenter').hidden)loadMatches(currentLeague,true)});
