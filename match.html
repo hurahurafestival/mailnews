@@ -27,6 +27,53 @@ function empty(el,msg){$(el).innerHTML='<div class="empty">'+esc(msg)+'</div>'}
 function getStats(data,competition){let rows=[];const sources=[data.boxscore?.teams,data.boxscore?.players,competition?.competitors];for(const source of sources){if(!Array.isArray(source))continue;for(const item of source){const stats=item.statistics||item.stats||[];if(Array.isArray(stats))for(const st of stats){const label=st.label||st.name||st.abbreviation;if(label)rows.push({label,home:st.displayValue??st.value??'—',side:item.homeAway||item.team?.displayName||''})}}}const map=new Map();for(const row of rows){if(!map.has(row.label))map.set(row.label,[]);map.get(row.label).push(row)}return [...map.entries()].map(([label,values])=>({label,values}))}
 function renderStats(data,competition){const rows=getStats(data,competition);if(!rows.length){empty('stats','Statistik belum disediakan untuk pertandingan ini.');return}const home=competition?.competitors?.find(x=>x.homeAway==='home'),away=competition?.competitors?.find(x=>x.homeAway==='away');const html=rows.slice(0,18).map(row=>{const vals=row.values;let h='—',a='—';if(vals.length>1){h=vals[0].home;a=vals[1].home}else{h=vals[0].home}return '<div class="stat"><span>'+esc(h)+'</span><div><strong>'+esc(row.label)+'</strong><div class="barline"><i style="width:50%"></i></div></div><span>'+esc(a)+'</span></div>'}).join('');$('stats').innerHTML=html}
 function renderLineups(data){const players=data.rosters||data.boxscore?.players||[];if(!Array.isArray(players)||!players.length){empty('lineups','Susunan pemain belum tersedia. Biasanya data ini muncul mendekati waktu pertandingan atau setelah pertandingan dimulai.');return}const cards=players.map(group=>{const team=group.team?.displayName||group.team?.name||'Tim';let list=group.roster||group.athletes||group.statistics||[];if(!Array.isArray(list))list=[];const names=list.map(x=>x.athlete||x.player||x).filter(x=>x&& (x.fullName||x.displayName||x.name));return '<article class="card"><h3>'+esc(team)+'</h3>'+(names.length?names.slice(0,25).map((x,i)=>'<div class="player"><span>'+esc(x.fullName||x.displayName||x.name)+'</span><small>'+esc(x.position?.abbreviation||x.position?.displayName||'Pemain')+'</small></div>').join(''):'<p class="muted">Daftar pemain belum tersedia.</p>')+'</article>'}).join('');$('lineups').innerHTML=cards||'<div class="empty">Susunan pemain belum tersedia.</div>'}
+
+function renderEspnEvents(data){
+ const raw=data.keyEvents||data.plays?.items||data.plays?.plays||data.commentary?.items||[];
+ const events=Array.isArray(raw)?raw:[];
+ if(!events.length){empty('events','Kronologi pertandingan belum disediakan ESPN untuk laga ini.');return}
+ const rows=events.map((e,i)=>{
+  const clock=e.clock?.displayValue||e.time?.displayValue||e.clock||e.time||e.period?.displayValue||'';
+  const text=e.text||e.shortText||e.description||e.type?.text||e.type?.name||'Kejadian pertandingan';
+  const team=e.team?.displayName||e.team?.name||e.competitor?.displayName||'';
+  const participants=(e.participants||[]).map(p=>p.athlete?.displayName||p.displayName||p.name).filter(Boolean).join(', ');
+  const important=e.scoringPlay||e.type?.text||e.type?.name||'';
+  return {clock:String(clock),text:String(text),team:String(team),participants,important,index:i};
+ }).filter(e=>e.text||e.participants);
+ if(!rows.length){empty('events','Belum ada kejadian pertandingan yang dapat ditampilkan.');return}
+ $('events').innerHTML=rows.slice(-50).reverse().map(e=>'<div class="player"><span><strong>'+esc(e.clock||'')+'</strong> · '+esc(e.text)+(e.participants?'<br><small>'+esc(e.participants)+'</small>':'')+'</span><small>'+esc(e.team)+'</small></div>').join('');
+}
+function renderEspnPlayerStats(data){
+ const groups=data.boxscore?.players||data.players||[];
+ const cards=[];
+ if(Array.isArray(groups))for(const group of groups){
+  const team=group.team?.displayName||group.team?.name||'Tim';
+  const categories=group.statistics||group.stats||[];
+  const athletes=[];
+  for(const category of categories){
+   const list=category.athletes||category.players||[];
+   for(const row of list){
+    const athlete=row.athlete||row.player||{};
+    const values=(row.stats||row.statistics||[]).map((v,i)=>{
+     const label=category.labels?.[i]||category.names?.[i]||'Stat '+(i+1);
+     return label+': '+v;
+    }).slice(0,5);
+    if(athlete.displayName||athlete.fullName||athlete.name)athletes.push({name:athlete.displayName||athlete.fullName||athlete.name,values});
+   }
+  }
+  const unique=[...new Map(athletes.map(x=>[x.name,x])).values()];
+  if(unique.length)cards.push('<article class="card"><h3>'+esc(team)+'</h3>'+unique.slice(0,18).map(p=>'<div class="player"><span>'+esc(p.name)+'<br><small>'+esc(p.values.join(' · ')||'Statistik belum tersedia')+'</small></span></div>').join('')+'</article>');
+ }
+ if(!cards.length&&Array.isArray(data.leaders)){
+  for(const group of data.leaders){
+   const team=group.team?.displayName||'Tim';
+   const leaders=(group.leaders||[]).flatMap(x=>(x.leaders||[]).map(p=>({name:p.athlete?.displayName||'Pemain',value:p.displayValue||p.value||'—',label:x.displayName||x.name||'Statistik'})));
+   if(leaders.length)cards.push('<article class="card"><h3>'+esc(team)+'</h3>'+leaders.map(p=>'<div class="player"><span>'+esc(p.name)+'</span><small>'+esc(p.label)+': '+esc(p.value)+'</small></div>').join('')+'</article>');
+  }
+ }
+ $('playerStats').innerHTML=cards.length?cards.join(''):'<div class="empty">Statistik individu belum disediakan ESPN untuk pertandingan ini.</div>';
+}
+
 function apiValue(v){if(v===null||v===undefined||v==='')return '—';if(typeof v==='object')return v.total??v.value??'—';return v}
 function renderApiStats(groups){
  if(!Array.isArray(groups)||!groups.length){empty('stats','Statistik belum tersedia untuk pertandingan ini atau tidak termasuk cakupan kompetisi.');return}
@@ -78,7 +125,7 @@ async function loadApiMatch(){
  document.title=home.name+' vs '+away.name+' — mailnews';
 }
 let detailRequestId=0;
-async function load(){if(fixtureId){try{await loadApiMatch()}catch(e){$('status').textContent='Detail API-Football belum tersedia: '+e.message;empty('stats','Statistik belum dapat dimuat.');empty('lineups','Susunan pemain belum tersedia.');empty('playerStats','Statistik pemain belum tersedia.');empty('events','Kejadian pertandingan belum tersedia.');$('info').textContent=e.message}return}const requestId=++detailRequestId;if(!eventId){$('status').textContent='ID pertandingan tidak ditemukan.';empty('stats','Buka halaman ini dari menu Jadwal & Skor.');empty('lineups','Pertandingan tidak dipilih.');$('info').textContent='ID pertandingan tidak tersedia pada alamat halaman.';return}try{const url='https://site.api.espn.com/apis/site/v2/sports/soccer/'+encodeURIComponent(leagueId)+'/summary?event='+encodeURIComponent(eventId);const response=await fetch(url,{cache:'no-store'});if(!response.ok)throw Error('Data tidak tersedia');const data=await response.json();if(requestId!==detailRequestId)return;const header=data.header||{},comp=header.competitions?.[0]||data.boxscore?.teams?.[0]?.competitors?.[0]?.competition||null;const competitors=comp?.competitors||header.competitions?.[0]?.competitors||[];const home=competitors.find(x=>x.homeAway==='home')||competitors[0],away=competitors.find(x=>x.homeAway==='away')||competitors[1];$('league').textContent=leagueNames[leagueId]||'Pertandingan';$('home').innerHTML=(window.mailnewsClubLogo(home?.team?.displayName,home?.team?.logos?.[0]?.href||home?.team?.logo||'')||'')+esc(home?.team?.displayName||'Tim kandang');$('away').innerHTML=(window.mailnewsClubLogo(away?.team?.displayName,away?.team?.logos?.[0]?.href||away?.team?.logo||'')||'')+esc(away?.team?.displayName||'Tim tandang');const completed=comp?.status?.type?.completed,live=comp?.status?.type?.state==='in';$('score').textContent=home&&away&&(completed||live)?(home.score??'0')+' : '+(away.score??'0'):'vs';$('status').textContent=comp?.status?.type?.detail||comp?.status?.type?.shortDetail||'Status pertandingan tidak tersedia';const venue=comp?.venue?.fullName||comp?.venue?.address?.city||'Stadion belum tersedia';const date=comp?.date||header?.competitions?.[0]?.date;$('info').textContent=(date?new Date(date).toLocaleString('id-ID',{dateStyle:'full',timeStyle:'short'}):'Waktu pertandingan belum tersedia')+' · '+venue;renderStats(data,comp);renderLineups(data);$('status').textContent=($('status').textContent||'')+' · ESPN · diperbarui '+new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});document.title=($('home').textContent+' vs '+$('away').textContent)+' — mailnews'}catch(e){if(requestId!==detailRequestId)return;$('status').textContent='Detail pertandingan belum dapat dimuat.';empty('stats','Penyedia data tidak mengirim statistik untuk pertandingan ini.');empty('lineups','Susunan pemain tidak tersedia saat ini.');$('info').textContent='Periksa koneksi internet atau coba kembali nanti.'}}
+async function load(){if(fixtureId){try{await loadApiMatch()}catch(e){$('status').textContent='Detail API-Football belum tersedia: '+e.message;empty('stats','Statistik belum dapat dimuat.');empty('lineups','Susunan pemain belum tersedia.');empty('playerStats','Statistik pemain belum tersedia.');empty('events','Kejadian pertandingan belum tersedia.');$('info').textContent=e.message}return}const requestId=++detailRequestId;if(!eventId){$('status').textContent='ID pertandingan tidak ditemukan.';empty('stats','Buka halaman ini dari menu Jadwal & Skor.');empty('lineups','Pertandingan tidak dipilih.');$('info').textContent='ID pertandingan tidak tersedia pada alamat halaman.';return}try{const url='https://site.api.espn.com/apis/site/v2/sports/soccer/'+encodeURIComponent(leagueId)+'/summary?event='+encodeURIComponent(eventId);const response=await fetch(url,{cache:'no-store'});if(!response.ok)throw Error('Data tidak tersedia');const data=await response.json();if(requestId!==detailRequestId)return;const header=data.header||{},comp=header.competitions?.[0]||data.boxscore?.teams?.[0]?.competitors?.[0]?.competition||null;const competitors=comp?.competitors||header.competitions?.[0]?.competitors||[];const home=competitors.find(x=>x.homeAway==='home')||competitors[0],away=competitors.find(x=>x.homeAway==='away')||competitors[1];$('league').textContent=leagueNames[leagueId]||'Pertandingan';$('home').innerHTML=(window.mailnewsClubLogo(home?.team?.displayName,home?.team?.logos?.[0]?.href||home?.team?.logo||'')||'')+esc(home?.team?.displayName||'Tim kandang');$('away').innerHTML=(window.mailnewsClubLogo(away?.team?.displayName,away?.team?.logos?.[0]?.href||away?.team?.logo||'')||'')+esc(away?.team?.displayName||'Tim tandang');const completed=comp?.status?.type?.completed,live=comp?.status?.type?.state==='in';$('score').textContent=home&&away&&(completed||live)?(home.score??'0')+' : '+(away.score??'0'):'vs';$('status').textContent=comp?.status?.type?.detail||comp?.status?.type?.shortDetail||'Status pertandingan tidak tersedia';const venue=comp?.venue?.fullName||comp?.venue?.address?.city||'Stadion belum tersedia';const date=comp?.date||header?.competitions?.[0]?.date;$('info').textContent=(date?new Date(date).toLocaleString('id-ID',{dateStyle:'full',timeStyle:'short'}):'Waktu pertandingan belum tersedia')+' · '+venue;renderStats(data,comp);renderLineups(data);renderEspnPlayerStats(data);renderEspnEvents(data);$('status').textContent=($('status').textContent||'')+' · ESPN · diperbarui '+new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});document.title=($('home').textContent+' vs '+$('away').textContent)+' — mailnews'}catch(e){if(requestId!==detailRequestId)return;$('status').textContent='Detail pertandingan belum dapat dimuat.';empty('stats','Penyedia data tidak mengirim statistik untuk pertandingan ini.');empty('lineups','Susunan pemain tidak tersedia saat ini.');empty('playerStats','Statistik individu tidak tersedia.');empty('events','Kronologi pertandingan tidak tersedia.');$('info').textContent='Periksa koneksi internet atau coba kembali nanti.'}}
 load();
 setInterval(load,30000);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')load()});
