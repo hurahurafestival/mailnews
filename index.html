@@ -379,8 +379,8 @@ async function loadStandings(league,force=false){
      if(!apiRows.length){apiFailure='Klasemen belum tersedia untuk musim '+season;continue}
      const rows=apiRows.map(x=>({name:x.team?.name||'Klub',logo:x.team?.logo||'',played:x.all?.played??'—',won:x.all?.win??'—',drawn:x.all?.draw??'—',lost:x.all?.lose??'—',gf:x.all?.goals?.for??'—',ga:x.all?.goals?.against??'—',gd:x.goalsDiff??'—',points:x.points??'—',rank:x.rank??'—'}));
      const decoratedRows=decorateStandingRows(league,rows);
-     standingCache[league]={time:Date.now(),rows};
-     box.innerHTML=standingsTableMarkup(rows);
+     standingCache[league]={time:Date.now(),rows:decoratedRows};
+     box.innerHTML=standingsTableMarkup(decoratedRows);
      $('#standingsStatus').textContent=label+' · musim '+season+' · '+rows.length+' klub · API-Football · diperbarui '+new Date().toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'});
      return;
     }catch(apiError){apiFailure=String(apiError)}
@@ -406,9 +406,9 @@ async function loadStandings(league,force=false){
    points:statValue(e,['points','pts']),
    rank:statValue(e,['rank','playoffseed'])
   }));
-  rows=decorateStandingRows(league,rows);
-  standingCache[league]={time:Date.now(),rows};
-  box.innerHTML=standingsTableMarkup(rows);
+  const decoratedRows=decorateStandingRows(league,rows);
+  standingCache[league]={time:Date.now(),rows:decoratedRows};
+  box.innerHTML=standingsTableMarkup(decoratedRows);
   const season=data.season?.year||data.season?.displayName||'musim berjalan';
   $('#standingsStatus').textContent=label+' · '+season+' · '+rows.length+' klub · diperbarui '+new Date().toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'})+' · sumber ESPN';
  }catch(e){
