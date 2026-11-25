@@ -319,7 +319,7 @@ async function loadStandings(league,force=false){
    return;
   }
   const apiConfig=await resolveApiLeague(league); const apiLeague=apiConfig?.id;
-  if(apiLeague){
+  if(apiLeague&&league!=='idn.1'){
    let apiFailure='API-Football tidak mengembalikan klasemen';
    const seasons=[apiConfig?.standingsSeason,new Date().getFullYear(),new Date().getFullYear()-1].filter((v,i,a)=>v&&a.indexOf(v)===i);
    for(const season of seasons){
