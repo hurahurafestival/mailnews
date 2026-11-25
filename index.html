@@ -424,32 +424,29 @@ async function loadMatches(league,silent=false){
    box.innerHTML=fixtures.length?fixtures.map(f=>matchCardApi(f,'','Jadwal hari ini')).join(''):'<div class="empty">Tidak ada pertandingan terjadwal hari ini pada kompetisi yang tercakup API-Football.</div>';
    matchUpdatedAt=new Date();return;
   }
-  const apiLeague={'idn.1':194,'kor.1':219,'aus.1':49,'chn.1':118,'eng.1':39,'esp.1':140,'ita.1':135,'ger.1':78,'uefa.champions':2}[league];
-  if(apiLeague){
-   const end=new Date(now);end.setDate(end.getDate()+7);
-   const season=now.getMonth()>=6?now.getFullYear():now.getFullYear()-1;
+  // API-Football Free hanya membuka musim 2022-2024; jangan gunakan untuk jadwal musim berjalan.
+  // ESPN scoreboard menerima satu tanggal per permintaan, bukan rentang tanggal.
+  const espnStart=new Date(now),espnEnd=new Date(now);espnEnd.setDate(espnEnd.getDate()+7);
+  const espnDate=d=>d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
+  const dayErrors=[];
+  for(let day=new Date(espnStart);day<=espnEnd;day.setDate(day.getDate()+1)){
    try{
-    const data=await fetchMatchData(worker+'fixtures?from='+dateParam(now)+'&to='+dateParam(end)+'&league='+apiLeague+'&season='+season);
-    fixtures=data.response||[];
-   }catch(e){apiMessage='API-Football: '+e.message}
+    const data=await fetchMatchData('https://site.api.espn.com/apis/site/v2/sports/soccer/'+encodeURIComponent(league)+'/scoreboard?dates='+espnDate(day));
+    fixtures.push(...(data.events||[]));
+   }catch(e){dayErrors.push(e.message)}
   }
-  if(!fixtures.length){
-   const espnStart=new Date(now),espnEnd=new Date(now);espnEnd.setDate(espnEnd.getDate()+7);
-   const espnDate=d=>d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
-   try{
-    const data=await fetchMatchData('https://site.api.espn.com/apis/site/v2/sports/soccer/'+encodeURIComponent(league)+'/scoreboard?dates='+espnDate(espnStart)+'&limit=100');
-    const events=data.events||[];
-    if(events.length){
-     provider='ESPN';
-     box.innerHTML=events.map(e=>{
-      const c=e.competitions?.[0],ts=c?.competitors||[],h=ts.find(t=>t.homeAway==='home')||ts[0],a=ts.find(t=>t.homeAway==='away')||ts[1],st=c?.status?.type,done=st?.completed,live=st?.state==='in';
-      return '<article class="news-card news-body"><div class="eyebrow">'+esc(leagueNames[league]||league)+' · ESPN</div><h3>'+esc(h?.team?.displayName||'TBD')+' <span style="color:var(--green)">'+(done||live?esc(h?.score??'0')+' – '+esc(a?.score??'0'):'vs')+'</span> '+esc(a?.team?.displayName||'TBD')+'</h3><p>'+esc(st?.shortDetail||new Date(e.date).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'}))+'</p><div class="news-meta"><span>'+(live?'<strong style="color:#e45b5b">● LIVE</strong>':done?'Selesai':'Jadwal')+'</span><a href="match.html?event='+encodeURIComponent(e.id)+'&league='+encodeURIComponent(league)+'">DETAIL ↗</a></div></article>';
-     }).join('');
-     $('#matchStatus').textContent=events.length+' pertandingan · ESPN cadangan';
-     matchUpdatedAt=new Date();return;
-    }
-   }catch(e){apiMessage+=(apiMessage?' · ':'')+'ESPN: '+e.message}
+  if(fixtures.length){
+   const unique=[...new Map(fixtures.map(e=>[e.id,e])).values()];
+   provider='ESPN';
+   box.innerHTML=unique.map(e=>{
+    const c=e.competitions?.[0],ts=c?.competitors||[],h=ts.find(t=>t.homeAway==='home')||ts[0],a=ts.find(t=>t.homeAway==='away')||ts[1],st=c?.status?.type,done=st?.completed,live=st?.state==='in';
+    return '<article class="news-card news-body"><div class="eyebrow">'+esc(leagueNames[league]||league)+' · ESPN</div><h3>'+esc(h?.team?.displayName||'TBD')+' <span style="color:var(--green)">'+(done||live?esc(h?.score??'0')+' – '+esc(a?.score??'0'):'vs')+'</span> '+esc(a?.team?.displayName||'TBD')+'</h3><p>'+esc(st?.shortDetail||new Date(e.date).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'}))+'</p><div class="news-meta"><span>'+(live?'<strong style="color:#e45b5b">● LIVE</strong>':done?'Selesai':'Jadwal')+'</span><a href="match.html?event='+encodeURIComponent(e.id)+'&league='+encodeURIComponent(league)+'">DETAIL ↗</a></div></article>';
+   }).join('');
+   $('#matchStatus').textContent=unique.length+' pertandingan · ESPN · 8 hari · diperbarui '+new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+   matchUpdatedAt=new Date();return;
   }
+  apiMessage=dayErrors.length?'ESPN gagal pada '+dayErrors.length+' dari 8 tanggal: '+dayErrors[0]:'Belum ada pertandingan dalam 8 hari ke depan.';
+
   if(fixtures.length){
    const live=fixtures.filter(f=>!!f.fixture?.status?.elapsed||['1H','HT','2H','ET','BT','P','LIVE'].includes(f.fixture?.status?.short)).length;
    box.innerHTML=fixtures.map(f=>matchCardApi(f,league)).join('');
