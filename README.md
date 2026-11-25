@@ -26,6 +26,8 @@ Buka https://hurahurafestival.github.io/mailnews/ atau jalankan `index.html` mel
 - OpenLigaDB menjadi sumber cadangan klasemen Bundesliga jika ESPN gagal, dengan label sumber dan waktu pembaruan. OpenLigaDB dikelola komunitas, sehingga bukan pengganti verifikasi resmi.
 - Halaman detail pertandingan API-Football: skor/status, kejadian (gol, kartu, pergantian pemain), statistik tim, susunan pemain, dan statistik pemain jika tersedia dari cakupan kompetisi.
 - Halaman detail pertandingan ESPN kini juga mencoba menampilkan kronologi kejadian dan statistik pemain dari ringkasan pertandingan jika disediakan oleh ESPN; grafik perbandingan statistik tim dihitung dari nilai kandang/tandang yang tersedia.
+- Susunan pemain API-Football kini memiliki visualisasi lapangan berdasarkan formasi dan koordinat grid pemain yang dikirim penyedia, disertai daftar pemain cadangan. Jika koordinat atau line-up tidak tersedia, halaman menampilkan keterangan bahwa data belum dirilis, bukan posisi rekaan.
+- Kronologi API-Football memakai penanda visual berbeda untuk gol, kartu kuning/merah, pergantian pemain, dan VAR; nama pencetak gol serta assist tetap mengikuti data penyedia.
 - Penyegaran detail pertandingan memiliki pengunci permintaan agar polling 30 detik dan pembukaan kembali tab tidak menumpuk permintaan ketika jaringan lambat.
 - Klasemen dunia dengan pilihan 46 liga/kompetisi dari Asia, Eropa, Amerika Utara, Amerika Selatan, Afrika, dan turnamen internasional; data ditarik dari endpoint ESPN dan hanya ditampilkan jika tersedia.
 - Filter wilayah dan kompetisi, tombol pembaruan manual, kolom main/menang/seri/kalah/gol memasukkan/gol kemasukan/selisih gol/poin, serta cache klasemen maksimal 5 menit.
