@@ -28,6 +28,11 @@ Buka https://hurahurafestival.github.io/mailnews/ atau jalankan `index.html` mel
 - Filter wilayah dan kompetisi, tombol pembaruan manual, kolom main/menang/seri/kalah/gol memasukkan/gol kemasukan/selisih gol/poin, serta cache klasemen maksimal 5 menit.
 - Direktori 26 klub dan halaman profil, berita klub, stadion, serta skuad untuk klub yang didukung penyedia data.
 
+## Logo klub
+- Logo SVG klub yang ditampilkan pada direktori utama disimpan di `assets/club-logos/` agar tersedia dari repositori Mailnews.
+- Pemetaan logo dipakai pada direktori/profil klub, kartu jadwal dan skor, serta klasemen. Klub dinamis lain memakai logo dari sumber data; bila tidak tersedia, Mailnews memakai logo cadangan dari penyedia atau ikon teks.
+- Atribusi koleksi logo: [JoseArroyave/football-logos](https://github.com/JoseArroyave/football-logos). Catatan lisensi dan hak merek ada di `assets/club-logos/README.md`.
+
 ## Catatan dan batasan
 - Koneksi internet diperlukan. ESPN atau RSS2JSON dapat membatasi permintaan atau tidak menyediakan data pada waktu tertentu. Waktu polling adalah interval pemeriksaan aplikasi, bukan jaminan bahwa penyedia memperbarui datanya pada interval yang sama.
 - Berita dan skuad bergantung pada layanan pihak ketiga; kegagalan layanan dapat membuat sebagian data tidak tampil.
