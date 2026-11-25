@@ -38,13 +38,13 @@
 </section><footer class="footer"><span>© <span id="year"></span> mailnews. Dibuat untuk pecinta sepak bola.</span><span>Sumber berita: Google News RSS melalui RSS2JSON. Hak cipta konten milik penerbit masing-masing.</span></footer>
 </main></div><script>
 const feeds=[
-{category:'Indonesia',q:'sepak bola Liga 1 Indonesia klub'},
-{category:'Premier League',q:'English Premier League football'},
-{category:'La Liga',q:'Spanish La Liga football'},
-{category:'Serie A',q:'Italian Serie A football'},
-{category:'Bundesliga',q:'German Bundesliga football'},
-{category:'Liga Champions',q:'UEFA Champions League football'},
-{category:'Transfer',q:'transfer pemain sepak bola football transfer'}
+{category:'Indonesia',q:'sepak bola Liga 1 Indonesia klub',outlets:['sepak bola Indonesia site:bola.kompas.com','sepak bola Indonesia site:sport.detik.com','sepak bola Indonesia site:antaranews.com']},
+{category:'Premier League',q:'English Premier League football',outlets:['Premier League site:bbc.com/sport/football','Premier League site:theguardian.com/football','Premier League site:skysports.com/football']},
+{category:'La Liga',q:'Spanish La Liga football',outlets:['La Liga site:bbc.com/sport/football','La Liga site:theguardian.com/football','La Liga site:skysports.com/football']},
+{category:'Serie A',q:'Italian Serie A football',outlets:['Serie A site:bbc.com/sport/football','Serie A site:theguardian.com/football','Serie A site:skysports.com/football']},
+{category:'Bundesliga',q:'German Bundesliga football',outlets:['Bundesliga site:bbc.com/sport/football','Bundesliga site:theguardian.com/football','Bundesliga site:skysports.com/football']},
+{category:'Liga Champions',q:'UEFA Champions League football',outlets:['Champions League site:bbc.com/sport/football','Champions League site:theguardian.com/football','Champions League site:skysports.com/football']},
+{category:'Transfer',q:'transfer pemain sepak bola football transfer',outlets:['football transfer site:bbc.com/sport/football','football transfer site:theguardian.com/football','football transfer site:skysports.com/football']}
 ];
 let articles=[],active='Semua',query='';
 const $=s=>document.querySelector(s);
@@ -52,12 +52,56 @@ const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 function timeAgo(date){const d=Date.now()-new Date(date).getTime();if(!Number.isFinite(d)||d<0)return 'Terbaru';const m=Math.floor(d/60000);if(m<60)return m+' menit lalu';const h=Math.floor(m/60);if(h<24)return h+' jam lalu';return Math.floor(h/24)+' hari lalu'}
 function cleanHtml(s){const d=document.createElement('div');d.innerHTML=s||'';return (d.textContent||d.innerText||'').trim()}
 function imageFrom(item){if(item.thumbnail)return item.thumbnail;const m=(item.description||'').match(/<img[^>]+src=["']([^"']+)/i);return m?m[1]:''}
-async function loadFeed(feed){const rss='https://news.google.com/rss/search?q='+encodeURIComponent(feed.q)+'&hl=id&gl=ID&ceid=ID:id';const url='https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(rss);const res=await fetch(url);if(!res.ok)throw Error('RSS request failed');const json=await res.json();if(json.status!=='ok')throw Error('RSS response error');return (json.items||[]).map(x=>({title:cleanHtml(x.title),description:cleanHtml(x.description).slice(0,230),url:x.link,date:x.pubDate,image:imageFrom(x),category:feed.category,source:(()=>{try{return new URL(x.link).hostname.replace(/^www\./,'')}catch{return x.author||'Google News'}})()}))}
+async function loadFeed(feed){
+ const searches=[feed.q,...(feed.outlets||[])];
+ const results=await Promise.allSettled(searches.map(async q=>{
+  const rss='https://news.google.com/rss/search?q='+encodeURIComponent(q)+'&hl=id&gl=ID&ceid=ID:id';
+  const url='https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(rss);
+  const res=await fetch(url);if(!res.ok)throw Error('RSS request failed');
+  const json=await res.json();if(json.status!=='ok')throw Error('RSS response error');
+  return (json.items||[]).map(x=>{
+   let host='';try{host=new URL(x.link).hostname.replace(/^www\./,'')}catch{}
+   const author=cleanHtml(x.author||'');
+   const source=author&&author.toLowerCase()!=='google news'?author:host==='news.google.com'?'Penerbit melalui Google News':host||'Penerbit berita';
+   return {title:cleanHtml(x.title),description:cleanHtml(x.description).slice(0,320),url:x.link,date:x.pubDate,image:imageFrom(x),category:feed.category,source};
+  });
+ }));
+ return results.flatMap(x=>x.status==='fulfilled'?x.value:[]);
+}
 const NEWS_CACHE_KEY='mailnews-news-cache-v1',NEWS_CACHE_TTL=15*60*1000;
-function normalizeArticles(items){const seen=new Set();return items.filter(a=>a.title&&!seen.has(a.title)&&(seen.add(a.title),true)).sort((a,b)=>new Date(b.date)-new Date(a.date))}
+function titleTokens(value){
+ const stop=new Set(['yang','dan','dari','untuk','dengan','the','and','for','with','saat','ini','itu','resmi','jadi','bola','football','sepak']);
+ return String(value||'').toLowerCase().replace(/[^a-z0-9 ]/g,' ').split(/\s+/).filter(x=>x.length>2&&!stop.has(x));
+}
+function titleSimilarity(a,b){
+ const aa=new Set(titleTokens(a)),bb=new Set(titleTokens(b));if(!aa.size||!bb.size)return 0;
+ let hit=0;aa.forEach(x=>{if(bb.has(x))hit++});
+ return hit/Math.min(aa.size,bb.size);
+}
+function normalizeArticles(items){
+ const groups=[];
+ items.filter(a=>a.title&&a.url).sort((a,b)=>new Date(b.date)-new Date(a.date)).forEach(item=>{
+  const match=groups.find(g=>g.category===item.category&&(g.sources.some(x=>x.url===item.url)||titleSimilarity(g.title,item.title)>=0.58));
+  const source={name:item.source||'Penerbit berita',title:item.title,description:item.description||'',url:item.url,date:item.date||''};
+  if(match){
+   if(!match.sources.some(x=>x.url===source.url))match.sources.push(source);
+   if(item.description&&!match.snippets.includes(item.description))match.snippets.push(item.description);
+   if(item.image&&!match.image)match.image=item.image;
+   if(new Date(item.date)>new Date(match.date)){match.date=item.date;match.title=item.title;}
+  }else groups.push({...item,sources:[source],snippets:item.description?[item.description]:[]});
+ });
+ return groups.map(g=>{
+  g.sources=g.sources.slice(0,6);
+  g.description=g.snippets.slice(0,3).join(' • ').slice(0,620);
+  g.synthesis=g.sources.length>1
+   ?'Beberapa penerbit mengangkat topik yang sama. Rangkuman ini menggabungkan cuplikan yang tersedia dari '+g.sources.length+' sumber, dengan tetap membedakan laporan dan atribusi masing-masing.'
+   :'Rangkuman ini disusun dari satu cuplikan feed. Belum ada laporan pembanding yang cocok dari sumber lain.';
+  return g;
+ }).sort((a,b)=>new Date(b.date)-new Date(a.date));
+}
 function readNewsCache(){try{const saved=JSON.parse(localStorage.getItem(NEWS_CACHE_KEY)||'null');return saved&&Array.isArray(saved.items)?saved:null}catch{return null}}
 async function loadNews(){const grid=$('#newsGrid'),cached=readNewsCache();if(cached?.items?.length){articles=cached.items;render();$('#resultCount').textContent='Berita tersimpan · diperbarui '+timeAgo(cached.savedAt);if(Date.now()-new Date(cached.savedAt).getTime()<NEWS_CACHE_TTL)return;}try{const results=await Promise.allSettled(feeds.map(loadFeed));const fresh=normalizeArticles(results.flatMap(x=>x.status==='fulfilled'?x.value:[]));if(!fresh.length)throw Error('Sumber berita belum dapat diakses');articles=fresh;try{localStorage.setItem(NEWS_CACHE_KEY,JSON.stringify({savedAt:new Date().toISOString(),items:articles.slice(0,100)}))}catch{}render();$('#resultCount').textContent=articles.length+' artikel · diperbarui otomatis';}catch(e){if(cached?.items?.length){articles=cached.items;render();$('#resultCount').textContent='Mode cache · '+timeAgo(cached.savedAt);return}grid.innerHTML='<div class="empty">Berita otomatis belum dapat dimuat saat ini.<br>Periksa koneksi internet lalu coba muat ulang halaman.<br><br><button class="filter active" onclick="loadNews()">Coba lagi</button></div>';$('#resultCount').textContent='Sumber belum tersedia';}}
-function detailUrl(a){const p=new URLSearchParams({title:a.title,description:a.description,url:a.url,image:a.image||'',category:a.category,date:a.date||''});return 'article.html?'+p.toString()}
+function detailUrl(a){const p=new URLSearchParams({title:a.title,description:a.description,url:a.url,image:a.image||'',category:a.category,date:a.date||'',sources:JSON.stringify(a.sources||[]),synthesis:a.synthesis||''});return 'article.html?'+p.toString()}
 function editorialScore(a){
  const ageHours=Math.max(0,(Date.now()-new Date(a.date).getTime())/3600000);
  const freshness=Number.isFinite(ageHours)?28*Math.exp(-ageHours/42):0;
