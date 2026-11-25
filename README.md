@@ -17,11 +17,13 @@ Buka https://hurahurafestival.github.io/mailnews/ atau jalankan `index.html` mel
 - Rangkuman lintas sumber yang dirangkai dari judul dan cuplikan RSS, disertai atribusi serta tautan masing-masing penerbit.
 - Rekomendasi berita terkait pada halaman artikel agar pembaca tetap menjelajah di mailnews.
 - Halaman ringkasan artikel dengan tautan ke penerbit asli.
-- Jadwal dan skor pertandingan dari ESPN untuk Premier League, La Liga, Serie A, Bundesliga, dan Liga Champions.
+- Pusat pertandingan menggunakan API-Football melalui Cloudflare Worker untuk liga yang terpetakan, dengan ESPN sebagai fallback bila tersedia.
+- Filter **Semua Live** untuk skor pertandingan yang sedang berlangsung lintas kompetisi, serta **Jadwal Hari Ini** untuk pertandingan dari semua liga yang tersedia.
+- Pilihan liga Indonesia, K League 1 Korea Selatan, A-League Men Australia, dan Chinese Super League menggunakan ID kompetisi API-Football yang terverifikasi.
 - Pusat pertandingan memperbarui daftar skor setiap 60 detik saat tab jadwal terbuka, menyediakan tombol pembaruan manual, dan menangani pergantian kompetisi ketika permintaan sebelumnya masih berjalan; halaman detail pertandingan memeriksa pembaruan setiap 30 detik tanpa memakai cache browser.
 - Klasemen diperiksa ulang saat hasil pertandingan selesai terdeteksi dan memiliki pembaruan cadangan setiap 5 menit saat panel klasemen terbuka; permintaan data klasemen dan skor memakai kebijakan tanpa cache browser agar tidak sengaja menampilkan respons cache lama.
 - OpenLigaDB menjadi sumber cadangan klasemen Bundesliga jika ESPN gagal, dengan label sumber dan waktu pembaruan. OpenLigaDB dikelola komunitas, sehingga bukan pengganti verifikasi resmi.
-- Halaman detail pertandingan dengan statistik dan susunan pemain jika disediakan oleh ESPN.
+- Halaman detail pertandingan API-Football: skor/status, kejadian (gol, kartu, pergantian pemain), statistik tim, susunan pemain, dan statistik pemain jika tersedia dari cakupan kompetisi.
 - Klasemen dunia dengan pilihan 46 liga/kompetisi dari Asia, Eropa, Amerika Utara, Amerika Selatan, Afrika, dan turnamen internasional; data ditarik dari endpoint ESPN dan hanya ditampilkan jika tersedia.
 - Filter wilayah dan kompetisi, tombol pembaruan manual, kolom main/menang/seri/kalah/gol memasukkan/gol kemasukan/selisih gol/poin, serta cache klasemen maksimal 5 menit.
 - Direktori 26 klub dan halaman profil, berita klub, stadion, serta skuad untuk klub yang didukung penyedia data.
@@ -34,7 +36,9 @@ Buka https://hurahurafestival.github.io/mailnews/ atau jalankan `index.html` mel
 - Data skuad klub Indonesia belum terintegrasi. Pelatih hanya ditampilkan jika tersedia sumber terverifikasi.
 - Informasi stadion merupakan data referensi dan perlu diverifikasi kembali ke sumber resmi klub.
 - Cakupan klasemen bergantung pada ketersediaan endpoint ESPN per kompetisi dan musim. Daftar 46 kompetisi adalah katalog pilihan, bukan jaminan semua liga dunia didukung; liga tanpa data akan diberi status belum tersedia. Data klasemen dapat kosong atau berubah mengikuti format penyedia.
-- Sumber pertandingan utama saat ini adalah ESPN; OpenLigaDB dipakai sebagai sumber cadangan jadwal, hasil, dan klasemen Bundesliga. Belum ada feed kedua yang terverifikasi untuk seluruh liga. Untuk multi-provider global yang benar-benar saling memeriksa, diperlukan API berlisensi seperti Sportmonks atau API-Football beserta token dan backend server-side. Jangan menaruh API key di JavaScript publik GitHub Pages.
+- Cakupan statistik, susunan pemain, dan livescore berbeda per kompetisi dan musim. API-Football menyatakan sebagian kompetisi hanya menyediakan hasil akhir; statistik dan line-up dapat tidak tersedia.
+- Klasemen API-Football diperbarui oleh penyedia sekitar setiap jam, bukan setiap detik. Fitur klasemen live yang benar-benar dihitung ulang selama pertandingan memerlukan snapshot sebelum matchday dan proses kalkulasi tersendiri; mailnews tidak akan mengarang posisi klasemen.
+- API-Football Free dibatasi 100 request/hari dan 10 request/menit; paket berbayar memiliki kuota lebih besar. Aplikasi berskala publik dengan polling banyak liga dan statistik live membutuhkan paket yang memadai atau penyedia berlisensi lain. Jangan menaruh API key di JavaScript publik GitHub Pages.
 
 
 ## Backend data provider (opsional)
@@ -44,12 +48,18 @@ Direktori `backend/` berisi Cloudflare Worker proxy untuk API-Football. Proxy me
 Panduan deploy, daftar endpoint, aturan cache, dan batasan cakupan tersedia di [backend/README.md](backend/README.md). Worker belum dipakai oleh frontend secara otomatis: URL Worker dan pemetaan ID liga API-Football perlu dikonfigurasi serta diuji terlebih dahulu. Sampai tahap itu, ESPN tetap sumber utama dan OpenLigaDB hanya cadangan Bundesliga.
 
 
-## Integrasi API-Football (aktif pada frontend)
+## Integrasi API-Football
 
-Worker Cloudflare `mailnews-footbal-api.hurahurafestival.workers.dev` menjadi sumber tambahan untuk skor live dan klasemen pada lima kompetisi yang sudah dipetakan: Premier League (39), La Liga (140), Serie A (135), Bundesliga (78), dan UEFA Champions League (2). Skor live API-Football ditampilkan bersama jadwal/hasil ESPN; klasemen API-Football dicoba lebih dahulu lalu ESPN menjadi fallback. Kompetisi lain tetap memakai ESPN dan fallback Bundesliga OpenLigaDB. Cakupan dan data aktual tetap mengikuti paket serta respons API-Football.
+Worker Cloudflare `mailnews-footbal-api.hurahurafestival.workers.dev` mem-proxy API-Football. ID yang digunakan untuk empat kompetisi Asia: Liga 1 Indonesia (194), K League 1 (219), A-League Men (49), dan Chinese Super League (118). Kompetisi Eropa utama tetap memiliki pemetaan API-Football. Endpoint `/fixtures?id=ID` menyediakan detail pertandingan terintegrasi jika tersedia, sedangkan `/fixtures?live=all` menyediakan pertandingan live lintas liga. Cakupan dan data aktual tetap mengikuti paket API-Football dan musim yang tersedia.
 
 Worker menerima filter `/fixtures?live=all&league=ID`; Secret `APIFOOTBALL_KEY` dikonfigurasi sebagai Cloudflare Worker secret. Jangan menyimpan key di frontend. Frontend dan Worker sudah diperiksa sintaksnya, tetapi respons data runtime dari API-Football belum dapat dikonfirmasi dari sesi pengembangan ini.
 
+
+### Pusat pertandingan dan detail live (25 November 2026)
+
+- Ditambahkan pilihan Semua Live lintas liga dan Jadwal Hari Ini lintas liga melalui endpoint API-Football.
+- Kartu pertandingan API-Football kini membuka halaman detail internal mailnews. Halaman detail mengambil fixture, kejadian, statistik, line-up, dan statistik pemain dalam satu permintaan fixture ID jika tersedia.
+- Pencarian liga memperhitungkan variasi nama negara API-Football (Korea Republic, China PR) serta nama kompetisi Indonesia yang dapat berubah.
 
 ### Perbaikan jadwal dan penyegaran klasemen (25 November 2026)
 
