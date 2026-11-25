@@ -32,7 +32,7 @@
 <section class="welcome"><div><div class="eyebrow">THE FOOTBALL DAILY</div><h1>Gairah sepak bola,<br>ada di sini.</h1><p>Berita terbaru dari lapangan Indonesia hingga dunia.</p></div><div class="live-pill"><i></i>UPDATE BERITA</div></section>
 <section class="hero" id="featuredHero"><div class="hero-content"><span class="tag" id="featuredTag">PILIHAN OTOMATIS</span><h2 id="featuredTitle">Semua cerita sepak bola, dalam satu tempat.</h2><p id="featuredSummary">Berita utama pilihan otomatis dari feed yang tersedia.</p><div class="hero-meta" id="featuredMeta">MAILNEWS EDITORIAL • BERITA SEPAK BOLA</div><p style="margin:17px 0 0"><a id="featuredLink" class="filter active" href="#newsSection" style="display:inline-block;text-decoration:none">Baca ringkasan ↗</a></p></div></section>
 <section id="editorialSection"><div class="section-head"><h2>Berita pilihan</h2><small>Urutan otomatis berdasarkan relevansi feed dan kebaruan</small></div><div class="editorial-grid" id="editorialGrid"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div></section>
-<section id="matchCenter" hidden><div class="section-head"><h2>Jadwal & hasil pertandingan</h2><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><small id="matchStatus">Pilih kompetisi</small><button class="filter active" id="refreshMatches" type="button">↻ Perbarui</button></div></div><div class="filters" id="leagueFilters"><button class="filter active" data-league="eng.1">Premier League</button><button class="filter" data-league="esp.1">La Liga</button><button class="filter" data-league="ita.1">Serie A</button><button class="filter" data-league="ger.1">Bundesliga</button><button class="filter" data-league="uefa.champions">Liga Champions</button><button class="filter" data-league="idn.1">Liga Indonesia</button><button class="filter" data-league="kor.1">K League 1</button><button class="filter" data-league="aus.1">A-League</button><button class="filter" data-league="chn.1">Chinese Super League</button><button class="filter" data-league="all-live">Semua Live</button><button class="filter" data-league="all-today">Jadwal Hari Ini</button></div><div id="matchGrid" class="news-grid"></div><p style="color:var(--muted);font-size:11px">Data pertandingan dari API-Football dan ESPN sebagai sumber cadangan. Ketersediaan mengikuti cakupan kompetisi.</p></section><section id="standingsPanel" hidden>
+<section id="matchCenter" hidden><div class="section-head"><h2>Jadwal & hasil pertandingan</h2><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><small id="matchStatus">Pilih kompetisi</small><button class="filter active" id="refreshMatches" type="button">↻ Perbarui</button></div></div><div class="filters" id="leagueFilters"><button class="filter active" data-league="eng.1">Premier League</button><button class="filter" data-league="esp.1">La Liga</button><button class="filter" data-league="ita.1">Serie A</button><button class="filter" data-league="ger.1">Bundesliga</button><button class="filter" data-league="uefa.champions">Liga Champions</button><button class="filter" data-league="idn.1">Liga Indonesia</button><button class="filter" data-league="kor.1">K League 1</button><button class="filter" data-league="aus.1">A-League</button><button class="filter" data-league="chn.1">Chinese Super League</button><button class="filter" data-league="all-live">Semua Live</button><button class="filter" data-league="all-today">Jadwal Hari Ini</button></div><div class="filters" id="matchDateControls" style="align-items:center;gap:8px;margin-top:-8px"><button class="filter" id="matchDatePrev" type="button" aria-label="Mundur satu hari">← Hari sebelumnya</button><label class="muted" for="matchStartDate" style="font-size:12px">Mulai tanggal</label><input class="filter" id="matchStartDate" type="date" aria-label="Tanggal mulai jadwal" style="color:var(--text);background:var(--panel)"><button class="filter" id="matchDateNext" type="button" aria-label="Maju satu hari">Hari berikutnya →</button><button class="filter" id="matchDateToday" type="button">Hari ini</button></div><div id="matchGrid" class="news-grid"></div><p style="color:var(--muted);font-size:11px">Jadwal menampilkan rentang 8 hari mulai dari tanggal yang dipilih. Data berasal dari ESPN dan AFC untuk Liga Indonesia; skor langsung lintas kompetisi tersedia melalui API-Football sesuai cakupan penyedia.</p></section><section id="standingsPanel" hidden>
 <div class="section-head"><h2>Klasemen liga dunia</h2><small id="standingsStatus">Pilih wilayah dan kompetisi</small></div>
 <div class="filters" style="align-items:center;flex-wrap:wrap">
 <select id="standingRegion" class="filter" aria-label="Pilih wilayah" style="color:var(--text);background:var(--panel)"><option value="Semua">🌍 Semua wilayah</option></select>
@@ -146,9 +146,15 @@ function setFilter(f){active=f;document.querySelectorAll('[data-filter]').forEac
 document.querySelectorAll('[data-filter]').forEach(b=>b.addEventListener('click',()=>{showView('news');setFilter(b.dataset.filter)}));
 function showView(view){$('#matchCenter').hidden=view!=='matches';$('#standingsPanel').hidden=view!=='standings';$('#newsSection').hidden=view!=='news';$('#editorialSection').hidden=view!=='news';document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));$('#sidebar').classList.remove('open');$('#overlay').classList.remove('show');if(view==='matches')loadMatches(currentLeague);if(view==='standings')loadStandings(currentStanding)}
 document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.view)));
+const localDateString=d=>{const x=new Date(d);return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0')};
+let matchStartDate=localDateString(new Date());
 let currentLeague='eng.1';const leagueNames={'eng.1':'Premier League','esp.1':'La Liga','ita.1':'Serie A','ger.1':'Bundesliga','idn.1':'Liga 1 Indonesia','kor.1':'K League 1','aus.1':'A-League Men','chn.1':'Chinese Super League','uefa.champions':'Liga Champions'};
 document.querySelectorAll('[data-league]').forEach(b=>b.addEventListener('click',()=>{currentLeague=b.dataset.league;document.querySelectorAll('[data-league]').forEach(x=>x.classList.toggle('active',x===b));loadMatches(currentLeague)}));
 $('#refreshMatches').addEventListener('click',()=>loadMatches(currentLeague));
+const matchDateInput=$('#matchStartDate');matchDateInput.value=matchStartDate;
+function shiftMatchDate(days){const d=new Date(matchStartDate+'T12:00:00');d.setDate(d.getDate()+days);matchStartDate=localDateString(d);matchDateInput.value=matchStartDate;loadMatches(currentLeague)}
+matchDateInput.addEventListener('change',()=>{if(matchDateInput.value){matchStartDate=matchDateInput.value;loadMatches(currentLeague)}});
+$('#matchDatePrev').addEventListener('click',()=>shiftMatchDate(-1));$('#matchDateNext').addEventListener('click',()=>shiftMatchDate(1));$('#matchDateToday').addEventListener('click',()=>{matchStartDate=localDateString(new Date());matchDateInput.value=matchStartDate;loadMatches(currentLeague)});
 
 const standingLeagues=[
 {region:'Asia',country:'Indonesia',name:'Liga 1 Indonesia',code:'idn.1'},
@@ -353,7 +359,7 @@ async function loadStandings(league,force=false){
  }
  try{
   if(league==='all-live'||league==='all-today'){
-   const now=new Date(),dateParam=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+   const now=new Date(matchStartDate+'T12:00:00'),dateParam=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
    const endpoint=league==='all-live'?'fixtures?live=all':'fixtures?date='+dateParam(now);
    const response=await fetch('https://mailnews-footbal-api.hurahurafestival.workers.dev/'+endpoint,{cache:'no-store'});
    const data=await response.json();
@@ -500,14 +506,14 @@ function renderEspnMatchCard(e,league){
  const c=e.competitions?.[0],ts=c?.competitors||[],h=ts.find(t=>t.homeAway==='home')||ts[0],a=ts.find(t=>t.homeAway==='away')||ts[1],st=c?.status?.type,done=st?.completed,live=st?.state==='in';
  return '<article class="news-card news-body"><div class="eyebrow">'+esc(leagueNames[league]||league)+' · ESPN</div><h3>'+clubLogo(h?.team?.displayName,h?.team?.logos?.[0]?.href||h?.team?.logo||'')+esc(h?.team?.displayName||'TBD')+' <span style="color:var(--green)">'+(done||live?esc(h?.score??'0')+' – '+esc(a?.score??'0'):'vs')+'</span> '+clubLogo(a?.team?.displayName,a?.team?.logos?.[0]?.href||a?.team?.logo||'')+esc(a?.team?.displayName||'TBD')+'</h3><p>'+esc(st?.shortDetail||new Date(e.date).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'}))+'</p><div class="news-meta"><span>'+(live?'<strong style="color:#e45b5b">● LIVE</strong>':done?'Selesai':'Jadwal')+'</span><a href="match.html?event='+encodeURIComponent(e.id)+'&league='+encodeURIComponent(league)+'">DETAIL ↗</a></div></article>';
 }
-function readScheduleCache(league){
- try{const value=JSON.parse(localStorage.getItem('mailnews-fixtures-'+league)||'null');return value&&Array.isArray(value.events)?value:null}catch{return null}
+function readScheduleCache(league,date=matchStartDate){
+ try{const value=JSON.parse(localStorage.getItem('mailnews-fixtures-'+league+'-'+date)||'null');if(value&&Array.isArray(value.events))return value;if(date===localDateString(new Date())){const legacy=JSON.parse(localStorage.getItem('mailnews-fixtures-'+league)||'null');return legacy&&Array.isArray(legacy.events)?legacy:null}return null}catch{return null}
 }
 async function loadMatches(league,silent=false){
  if(matchPollBusy){matchPendingLeague=league;return}
  matchPollBusy=true;
  const box=$('#matchGrid'),worker='https://mailnews-footbal-api.hurahurafestival.workers.dev/';
- const savedSchedule=readScheduleCache(league);
+ const savedSchedule=readScheduleCache(league,matchStartDate);
  if(!silent){
   if(savedSchedule?.events?.length){
    box.innerHTML=savedSchedule.events.map(e=>renderEspnMatchCard(e,league)).join('');
@@ -525,7 +531,7 @@ async function loadMatches(league,silent=false){
    matchUpdatedAt=new Date();return;
   }
   if(league==='all-today'){
-   const data=await fetchMatchData(worker+'fixtures?date='+dateParam(now));
+   const data=await fetchMatchData(worker+'fixtures?date='+dateParam(new Date()));
    fixtures=data.response||[];
    $('#matchStatus').textContent=fixtures.length+' pertandingan hari ini · API-Football';
    box.innerHTML=fixtures.length?fixtures.map(f=>matchCardApi(f,'','Jadwal hari ini')).join(''):'<div class="empty">Tidak ada pertandingan terjadwal hari ini pada kompetisi yang tercakup API-Football.</div>';
@@ -533,7 +539,9 @@ async function loadMatches(league,silent=false){
   }
   if(league==='idn.1'){
    try{
-    const afcFixtures=await loadAfcIndonesiaFixtures();
+    const afcAll=await loadAfcIndonesiaFixtures();
+    const afcEnd=new Date(now);afcEnd.setDate(afcEnd.getDate()+7);
+    const afcFixtures=afcAll.filter(f=>new Date(f.date)>=new Date(now.getFullYear(),now.getMonth(),now.getDate())&&new Date(f.date)<new Date(afcEnd.getFullYear(),afcEnd.getMonth(),afcEnd.getDate()+1));
     if(afcFixtures.length){
      box.innerHTML=afcFixtures.map(matchCardAfc).join('');
      $('#matchStatus').textContent=afcFixtures.length+' pertandingan mendatang · AFC · jadwal Liga Indonesia';
@@ -557,8 +565,8 @@ async function loadMatches(league,silent=false){
    const unique=[...new Map(fixtures.map(e=>[e.id,e])).values()];
    provider='ESPN';
    box.innerHTML=unique.map(e=>renderEspnMatchCard(e,league)).join('');
-   try{localStorage.setItem('mailnews-fixtures-'+league,JSON.stringify({savedAt:Date.now(),events:unique}))}catch{}
-   $('#matchStatus').textContent=unique.length+' pertandingan · ESPN · 8 hari'+(dayErrors.length?' · sebagian tanggal gagal ('+dayErrors.length+')':'')+(apiMessage?' · '+apiMessage:'')+' · diperbarui '+new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+   try{localStorage.setItem('mailnews-fixtures-'+league+'-'+matchStartDate,JSON.stringify({savedAt:Date.now(),events:unique}))}catch{}
+   $('#matchStatus').textContent=unique.length+' pertandingan · ESPN · '+matchStartDate+' s.d. '+dateParam(espnEnd)+(dayErrors.length?' · sebagian tanggal gagal ('+dayErrors.length+')':'')+(apiMessage?' · '+apiMessage:'')+' · diperbarui '+new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
    matchUpdatedAt=new Date();return;
   }
   apiMessage=dayErrors.length?'ESPN gagal pada '+dayErrors.length+' dari 8 tanggal: '+dayErrors[0]:'Belum ada pertandingan dalam 8 hari ke depan.';
@@ -571,7 +579,7 @@ async function loadMatches(league,silent=false){
    box.innerHTML=savedSchedule.events.map(e=>renderEspnMatchCard(e,league)).join('');
    $('#matchStatus').textContent='Data terbaru gagal dimuat · menampilkan '+savedSchedule.events.length+' pertandingan tersimpan dari '+new Date(savedSchedule.savedAt).toLocaleString('id-ID')+(apiMessage?' · '+apiMessage:'');
   }else{
-   box.innerHTML='<div class="empty">Jadwal belum tersedia untuk kompetisi ini. '+esc(apiMessage||'Sumber belum mengirimkan pertandingan dalam rentang 7 hari.')+'</div>';
+   box.innerHTML='<div class="empty">Jadwal belum tersedia untuk kompetisi ini. '+esc(apiMessage||'Sumber belum mengirimkan pertandingan dalam rentang 8 hari mulai '+matchStartDate+'.')+'</div>';
    $('#matchStatus').textContent='Data jadwal belum tersedia'+(apiMessage?' · '+apiMessage:'');
   }
   matchUpdatedAt=new Date();
