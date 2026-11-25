@@ -40,7 +40,7 @@
 <button class="filter active" id="refreshStandings" type="button">↻ Perbarui</button>
 </div>
 <div id="standingsTable" class="news-grid"></div>
-<p style="color:var(--muted);font-size:11px">Klasemen memakai tabel musim berjalan ESPN. Saat panel klasemen terbuka, Mailnews memeriksa skor setiap 1 menit dan memuat ulang tabel saat mendeteksi pertandingan selesai; pembaruan cadangan berjalan setiap 5 menit. Data diperbarui hanya setelah penyedia menerbitkan hasilnya. Sumber: ESPN. Kompetisi yang tidak memiliki data tetap ditandai belum tersedia.</p>
+<p style="color:var(--muted);font-size:11px">Klasemen memakai tabel musim berjalan ESPN. Saat panel klasemen terbuka, Mailnews memeriksa skor setiap 1 menit dan memuat ulang tabel saat mendeteksi pertandingan selesai; pembaruan cadangan berjalan setiap 5 menit. Data diperbarui hanya setelah penyedia menerbitkan hasilnya. Sumber utama: ESPN. Bundesliga memiliki sumber cadangan OpenLigaDB jika ESPN gagal; data OpenLigaDB dikelola komunitas dan dapat terlambat. Kompetisi yang tidak memiliki data tetap ditandai belum tersedia.</p>
 </section><section id="newsSection"><div class="section-head"><h2>Berita terbaru</h2><small id="resultCount">Memuat berita…</small></div>
 <div class="filters" id="filters"><button class="filter active" data-filter="Semua">Semua berita</button><button class="filter" data-filter="Indonesia">Indonesia</button><button class="filter" data-filter="Premier League">Premier League</button><button class="filter" data-filter="La Liga">La Liga</button><button class="filter" data-filter="Serie A">Serie A</button><button class="filter" data-filter="Bundesliga">Bundesliga</button><button class="filter" data-filter="Liga Champions">Liga Champions</button><button class="filter" data-filter="Transfer">Transfer</button></div>
 <div class="news-grid" id="newsGrid"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
@@ -263,8 +263,22 @@ async function loadStandings(league,force=false){
   const season=data.season?.year||data.season?.displayName||'musim berjalan';
   $('#standingsStatus').textContent=label+' · '+season+' · '+rows.length+' klub · diperbarui '+new Date().toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'})+' · sumber ESPN';
  }catch(e){
+  if(league==='ger.1'){
+   try{
+    const season=new Date().getMonth()>=6?new Date().getFullYear():new Date().getFullYear()-1;
+    const secondary=await fetch('https://api.openligadb.de/getbltable/bl1/'+season,{cache:'no-store'});
+    if(!secondary.ok)throw Error('OpenLigaDB unavailable');
+    const table=await secondary.json();
+    if(!Array.isArray(table)||!table.length)throw Error('No secondary table');
+    const rows=table.map((x,i)=>({name:x.teamName||x.team?.teamName||'Klub',logo:x.teamIconUrl||x.team?.teamIconUrl||'',played:x.matches??x.matchCount??'—',won:x.won??'—',drawn:x.draw??x.drawn??'—',lost:x.lost??'—',gf:x.goals??x.goalsFor??'—',ga:x.opponentGoals??x.goalsAgainst??'—',gd:x.goalDiff??x.goalDifference??'—',points:x.points??'—',rank:x.rank??i+1}));
+    standingCache[league]={time:Date.now(),rows};
+    box.innerHTML=standingsTableMarkup(rows);
+    $('#standingsStatus').textContent=label+' · OpenLigaDB (cadangan komunitas) · diperbarui '+new Date().toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'});
+    return;
+   }catch(secondaryError){}
+  }
   $('#standingsStatus').textContent='Klasemen tidak tersedia';
-  box.innerHTML='<div class="empty">'+esc(label)+' belum menyediakan data klasemen melalui penyedia saat ini. Pilih kompetisi lain atau coba perbarui nanti.<br><br><button class="filter active" onclick="loadStandings(currentStanding,true)">Coba lagi</button></div>';
+  box.innerHTML='<div class="empty">'+esc(label)+' belum menyediakan data klasemen dari sumber yang tersedia. Mailnews tidak membuat angka sendiri. <button class="filter active" onclick="loadStandings(currentStanding,true)">Coba lagi</button></div>';
  }
 }
 
@@ -297,7 +311,32 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 
 populateStandingRegions();
 leagueSelect.value=currentStanding;
-async function loadMatches(league){const box=$('#matchGrid');$('#matchStatus').textContent='Memuat '+leagueNames[league]+'…';box.innerHTML='<div class="skeleton"></div><div class="skeleton"></div>';try{const r=await fetch('https://site.api.espn.com/apis/site/v2/sports/soccer/'+league+'/scoreboard');if(!r.ok)throw Error('API unavailable');const data=await r.json();const events=data.events||[];$('#matchStatus').textContent=events.length+' pertandingan';if(!events.length){box.innerHTML='<div class="empty">Belum ada jadwal atau hasil yang tersedia.</div>';return}box.innerHTML=events.map(e=>{const c=e.competitions?.[0],ts=c?.competitors||[],h=ts.find(t=>t.homeAway==='home')||ts[0],a=ts.find(t=>t.homeAway==='away')||ts[1],st=c?.status?.type,done=st?.completed,live=st?.state==='in';return '<article class="news-card news-body"><div class="eyebrow">'+esc(leagueNames[league])+'</div><h3>'+esc(h?.team?.displayName||'TBD')+' <span style="color:var(--green)">'+(done||live?esc(h?.score||'0')+' – '+esc(a?.score||'0'):'vs')+'</span> '+esc(a?.team?.displayName||'TBD')+'</h3><p>'+esc(st?.shortDetail||new Date(e.date).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'}))+'</p><div class="news-meta"><span>'+(done?'Selesai':live?'Berlangsung':'Terjadwal')+'</span><a href="match.html?event='+encodeURIComponent(e.id)+'&league='+encodeURIComponent(league)+'">DETAIL ↗</a></div></article>'}).join('')}catch(e){$('#matchStatus').textContent='Data tidak tersedia';box.innerHTML='<div class="empty">Data pertandingan belum dapat diakses. Periksa koneksi lalu coba lagi.<br><br><button class="filter active" onclick="loadMatches(currentLeague)">Coba lagi</button></div>'}}
+let matchPollBusy=false,matchUpdatedAt=null;
+async function loadMatches(league,silent=false){
+ if(matchPollBusy)return;
+ matchPollBusy=true;
+ const box=$('#matchGrid');
+ if(!silent){$('#matchStatus').textContent='Memuat '+(leagueNames[league]||league)+'…';box.innerHTML='<div class="skeleton"></div><div class="skeleton"></div>'}
+ try{
+  const url='https://site.api.espn.com/apis/site/v2/sports/soccer/'+encodeURIComponent(league)+'/scoreboard?limit=100';
+  const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw Error('ESPN unavailable');
+  const data=await r.json(),events=data.events||[];
+  matchUpdatedAt=new Date();
+  const liveCount=events.filter(e=>e.competitions?.[0]?.status?.type?.state==='in').length;
+  $('#matchStatus').textContent=events.length+' pertandingan · '+liveCount+' live · ESPN · diperbarui '+matchUpdatedAt.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  if(!events.length){box.innerHTML='<div class="empty">Belum ada jadwal atau hasil yang tersedia dari ESPN.</div>';return}
+  box.innerHTML=events.map(e=>{
+   const c=e.competitions?.[0],ts=c?.competitors||[],h=ts.find(t=>t.homeAway==='home')||ts[0],a=ts.find(t=>t.homeAway==='away')||ts[1],st=c?.status?.type,done=st?.completed,live=st?.state==='in';
+   const status=done?'Selesai':live?'LIVE':st?.shortDetail||'Terjadwal';
+   return '<article class="news-card news-body"><div class="eyebrow">'+esc(leagueNames[league]||league)+' · ESPN</div><h3>'+esc(h?.team?.displayName||'TBD')+' <span style="color:var(--green)">'+(done||live?esc(h?.score??'0')+' – '+esc(a?.score??'0'):'vs')+'</span> '+esc(a?.team?.displayName||'TBD')+'</h3><p>'+esc(st?.shortDetail||new Date(e.date).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'}))+'</p><div class="news-meta"><span>'+(live?'<strong style="color:#e45b5b">● LIVE</strong>':esc(status))+'</span><a href="match.html?event='+encodeURIComponent(e.id)+'&league='+encodeURIComponent(league)+'">DETAIL ↗</a></div></article>'
+  }).join('');
+ }catch(e){
+  $('#matchStatus').textContent='Sumber skor utama tidak tersedia';
+  if(!silent)box.innerHTML='<div class="empty">Data ESPN belum dapat diakses. Kami tidak menampilkan skor perkiraan. Coba perbarui lagi nanti.</div>';
+ }finally{matchPollBusy=false}
+}
+setInterval(()=>{if(!$('#matchCenter').hidden&&document.visibilityState==='visible')loadMatches(currentLeague,true)},60*1000);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&!$('#matchCenter').hidden)loadMatches(currentLeague,true)});
 
 $('#searchInput').addEventListener('input',e=>{query=e.target.value;render()});
 function setTheme(t){document.documentElement.dataset.theme=t;localStorage.setItem('mailnews-theme',t);$('#themeBtn').textContent=t==='dark'?'☼':'☾'}
