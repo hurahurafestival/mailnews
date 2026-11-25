@@ -74,3 +74,10 @@ Worker menerima filter `/fixtures?live=all&league=ID`; Secret `APIFOOTBALL_KEY` 
 - Klasemen Indonesia menandai posisi 1 sebagai kualifikasi AFC, posisi 2 sebagai AFC Challenge League, dan posisi 16–18 sebagai zona degradasi sesuai regulasi BRI Super League 2026/27 (Article 7.8 untuk degradasi) serta penanda kualifikasi yang ditampilkan penyedia klasemen.
 - BRI Super League adalah kasta tertinggi sehingga tidak memiliki zona promosi domestik. Posisi 16–18 terdegradasi ke Championship musim berikutnya.
 - Kolom **Gerak** memakai snapshot klasemen sebelumnya yang disimpan lokal di browser pengunjung. ▲ berarti naik posisi, ▼ turun posisi; kunjungan pertama akan menampilkan tanda — karena belum ada snapshot pembanding.
+
+### Optimasi pemuatan jadwal dan detail pertandingan (25 November 2026)
+
+- Jadwal ESPN untuk rentang delapan tanggal kini diminta dalam dua kelompok paralel (maksimal empat tanggal sekaligus), dengan batas waktu 7 detik per tanggal, bukan delapan permintaan berurutan.
+- Hasil jadwal ESPN disimpan pada perangkat pengunjung. Saat panel dibuka kembali, hasil tersimpan langsung ditampilkan sambil mengambil data terbaru; jika sumber gagal, hasil tersimpan tetap ditampilkan dengan label waktu agar tidak disalahartikan sebagai data live.
+- Status jadwal menunjukkan jika sebagian tanggal gagal dimuat. Ini membantu membedakan jadwal kosong dari kegagalan sumber.
+- Validasi ID numerik pada endpoint Worker /match diperbaiki. Worker berhasil di-deploy ke Cloudflare; pemeriksaan sintaks frontend dan Worker lulus.
