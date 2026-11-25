@@ -35,3 +35,10 @@ Buka https://hurahurafestival.github.io/mailnews/ atau jalankan `index.html` mel
 - Informasi stadion merupakan data referensi dan perlu diverifikasi kembali ke sumber resmi klub.
 - Cakupan klasemen bergantung pada ketersediaan endpoint ESPN per kompetisi dan musim. Daftar 46 kompetisi adalah katalog pilihan, bukan jaminan semua liga dunia didukung; liga tanpa data akan diberi status belum tersedia. Data klasemen dapat kosong atau berubah mengikuti format penyedia.
 - Sumber pertandingan utama saat ini adalah ESPN; OpenLigaDB dipakai sebagai sumber cadangan jadwal, hasil, dan klasemen Bundesliga. Belum ada feed kedua yang terverifikasi untuk seluruh liga. Untuk multi-provider global yang benar-benar saling memeriksa, diperlukan API berlisensi seperti Sportmonks atau API-Football beserta token dan backend server-side. Jangan menaruh API key di JavaScript publik GitHub Pages.
+
+
+## Backend data provider (opsional)
+
+Direktori `backend/` berisi Cloudflare Worker proxy untuk API-Football. Proxy menyediakan endpoint livescore global, jadwal berdasarkan tanggal, detail pertandingan, pencarian liga, dan klasemen. API key harus disimpan sebagai Worker secret `APIFOOTBALL_KEY`, bukan di frontend atau repository publik.
+
+Panduan deploy, daftar endpoint, aturan cache, dan batasan cakupan tersedia di [backend/README.md](backend/README.md). Worker belum dipakai oleh frontend secara otomatis: URL Worker dan pemetaan ID liga API-Football perlu dikonfigurasi serta diuji terlebih dahulu. Sampai tahap itu, ESPN tetap sumber utama dan OpenLigaDB hanya cadangan Bundesliga.
