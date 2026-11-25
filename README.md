@@ -18,16 +18,20 @@ Buka https://hurahurafestival.github.io/mailnews/ atau jalankan `index.html` mel
 - Rekomendasi berita terkait pada halaman artikel agar pembaca tetap menjelajah di mailnews.
 - Halaman ringkasan artikel dengan tautan ke penerbit asli.
 - Jadwal dan skor pertandingan dari ESPN untuk Premier League, La Liga, Serie A, Bundesliga, dan Liga Champions.
+- Pusat pertandingan memperbarui daftar skor setiap 60 detik saat tab jadwal terbuka; halaman detail pertandingan memeriksa pembaruan setiap 30 detik selama halaman aktif.
+- Klasemen diperiksa ulang saat hasil pertandingan selesai terdeteksi dan memiliki pembaruan cadangan setiap 5 menit saat panel klasemen terbuka.
+- OpenLigaDB menjadi sumber cadangan klasemen Bundesliga jika ESPN gagal, dengan label sumber dan waktu pembaruan. OpenLigaDB dikelola komunitas, sehingga bukan pengganti verifikasi resmi.
 - Halaman detail pertandingan dengan statistik dan susunan pemain jika disediakan oleh ESPN.
 - Klasemen dunia dengan pilihan 46 liga/kompetisi dari Asia, Eropa, Amerika Utara, Amerika Selatan, Afrika, dan turnamen internasional; data ditarik dari endpoint ESPN dan hanya ditampilkan jika tersedia.
-- Filter wilayah dan kompetisi, tombol pembaruan manual, kolom main/menang/seri/kalah/gol memasukkan/gol kemasukan/selisih gol/poin, serta cache klasemen 30 menit.
+- Filter wilayah dan kompetisi, tombol pembaruan manual, kolom main/menang/seri/kalah/gol memasukkan/gol kemasukan/selisih gol/poin, serta cache klasemen maksimal 5 menit.
 - Direktori 26 klub dan halaman profil, berita klub, stadion, serta skuad untuk klub yang didukung penyedia data.
 
 ## Catatan dan batasan
-- Koneksi internet diperlukan. RSS2JSON atau ESPN dapat membatasi permintaan atau tidak menyediakan data pada waktu tertentu.
+- Koneksi internet diperlukan. ESPN atau RSS2JSON dapat membatasi permintaan atau tidak menyediakan data pada waktu tertentu. Waktu polling adalah interval pemeriksaan aplikasi, bukan jaminan bahwa penyedia memperbarui datanya pada interval yang sama.
 - Berita dan skuad bergantung pada layanan pihak ketiga; kegagalan layanan dapat membuat sebagian data tidak tampil.
 - Kartu berita dan halaman artikel dibuka di mailnews; nama penerbit dan tautan sumber asli dicantumkan sebagai atribusi. Mailnews tidak menyalin artikel penuh.
 - Rangkuman lintas sumber dibuat otomatis dari cuplikan RSS yang tersedia, bukan dari teks lengkap artikel. Pengelompokan topik menggunakan kemiripan judul sehingga tidak selalu sempurna; jumlah sumber pembanding dapat berbeda untuk setiap berita.
 - Data skuad klub Indonesia belum terintegrasi. Pelatih hanya ditampilkan jika tersedia sumber terverifikasi.
 - Informasi stadion merupakan data referensi dan perlu diverifikasi kembali ke sumber resmi klub.
 - Cakupan klasemen bergantung pada ketersediaan endpoint ESPN per kompetisi dan musim. Daftar 46 kompetisi adalah katalog pilihan, bukan jaminan semua liga dunia didukung; liga tanpa data akan diberi status belum tersedia. Data klasemen dapat kosong atau berubah mengikuti format penyedia.
+- Sumber pertandingan utama saat ini adalah ESPN; OpenLigaDB hanya dipakai sebagai cadangan klasemen Bundesliga. Belum ada feed kedua yang terverifikasi untuk seluruh liga. Untuk multi-provider global yang benar-benar saling memeriksa, diperlukan API berlisensi seperti Sportmonks atau API-Football beserta token dan backend server-side. Jangan menaruh API key di JavaScript publik GitHub Pages.
