@@ -113,55 +113,6 @@ export default {
       return json({ error: "Endpoint tidak ditemukan." }, 404, origin);
     }
 
-    if (path === "/match") {
-      const fixture = params.get("fixture");
-      const target = API_BASE + "/fixtures?id=" + fixture;
-      const cacheKey = new Request(target, { method: "GET" });
-      const cache = caches.default;
-      const cached = bypassCache ? null : await cache.match(cacheKey);
-      if (cached) {
-        const headers = new Headers(cached.headers);
-        Object.entries(corsHeaders(origin)).forEach(([k, v]) => headers.set(k, v));
-        headers.set("X-Mailnews-Cache", "HIT");
-        return new Response(cached.body, { status: cached.status, headers });
-      }
-      try {
-        const upstream = await fetch(target, {
-          headers: { "x-apisports-key": env.APIFOOTBALL_KEY },
-          cf: bypassCache ? { cacheTtl: 0, cacheEverything: false } : { cacheTtl: cacheSeconds, cacheEverything: true }
-        });
-        const raw = await upstream.text();
-        let parsed;
-        try { parsed = JSON.parse(raw); } catch { parsed = { error: "Respons bukan JSON." }; }
-        if (!upstream.ok || (parsed.errors && Object.keys(parsed.errors).length)) {
-          return json({ error: "Penyedia menolak permintaan detail pertandingan.", providerStatus: upstream.status, details: parsed.errors || parsed.error || parsed }, upstream.status, origin);
-        }
-        const item = parsed.response?.[0];
-        if (!item) return json({ error: "Detail pertandingan tidak tersedia." }, 404, origin);
-        const payload = {
-          fixture: { response: [item] },
-          events: { response: item.events || [] },
-          statistics: { response: item.statistics || [] },
-          lineups: { response: item.lineups || [] },
-          players: { response: item.players || [] },
-          provider: "API-Football"
-        };
-        const response = new Response(JSON.stringify(payload), {
-          status: 200,
-          headers: {
-            "Content-Type": "application/json; charset=utf-8",
-            "Cache-Control": "public, max-age=0, s-maxage=" + cacheSeconds,
-            "X-Mailnews-Provider": "API-Football",
-            ...corsHeaders(origin)
-          }
-        });
-        if (!bypassCache) ctx.waitUntil(cache.put(cacheKey, response.clone()));
-        return response;
-      } catch (error) {
-        return json({ error: "Tidak dapat mengambil detail pertandingan.", details: String(error) }, 502, origin);
-      }
-    }
-
     const target = API_BASE + path + "?" + params.toString();
     const cacheKey = new Request(target, { method: "GET" });
     const cache = caches.default;
