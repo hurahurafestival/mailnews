@@ -149,7 +149,7 @@ document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',(
 const localDateString=d=>{const x=new Date(d);return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0')};
 let matchStartDate=localDateString(new Date());
 let currentLeague='eng.1';const leagueNames={'eng.1':'Premier League','esp.1':'La Liga','ita.1':'Serie A','ger.1':'Bundesliga','idn.1':'Liga 1 Indonesia','kor.1':'K League 1','aus.1':'A-League Men','chn.1':'Chinese Super League','uefa.champions':'Liga Champions'};
-document.querySelectorAll('[data-league]').forEach(b=>b.addEventListener('click',()=>{currentLeague=b.dataset.league;document.querySelectorAll('[data-league]').forEach(x=>x.classList.toggle('active',x===b));loadMatches(currentLeague)}));
+document.querySelectorAll('[data-league]').forEach(b=>b.addEventListener('click',()=>{currentLeague=b.dataset.league;$('#matchDateControls').hidden=['all-live','all-today'].includes(currentLeague);document.querySelectorAll('[data-league]').forEach(x=>x.classList.toggle('active',x===b));loadMatches(currentLeague)}));
 $('#refreshMatches').addEventListener('click',()=>loadMatches(currentLeague));
 const matchDateInput=$('#matchStartDate');matchDateInput.value=matchStartDate;
 function shiftMatchDate(days){const d=new Date(matchStartDate+'T12:00:00');d.setDate(d.getDate()+days);matchStartDate=localDateString(d);matchDateInput.value=matchStartDate;loadMatches(currentLeague)}
@@ -359,7 +359,7 @@ async function loadStandings(league,force=false){
  }
  try{
   if(league==='all-live'||league==='all-today'){
-   const now=new Date(matchStartDate+'T12:00:00'),dateParam=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+   const now=new Date(requestedStartDate+'T12:00:00'),dateParam=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
    const endpoint=league==='all-live'?'fixtures?live=all':'fixtures?date='+dateParam(now);
    const response=await fetch('https://mailnews-footbal-api.hurahurafestival.workers.dev/'+endpoint,{cache:'no-store'});
    const data=await response.json();
@@ -512,8 +512,9 @@ function readScheduleCache(league,date=matchStartDate){
 async function loadMatches(league,silent=false){
  if(matchPollBusy){matchPendingLeague=league;return}
  matchPollBusy=true;
+ const requestedStartDate=matchStartDate;
  const box=$('#matchGrid'),worker='https://mailnews-footbal-api.hurahurafestival.workers.dev/';
- const savedSchedule=readScheduleCache(league,matchStartDate);
+ const savedSchedule=readScheduleCache(league,requestedStartDate);
  if(!silent){
   if(savedSchedule?.events?.length){
    box.innerHTML=savedSchedule.events.map(e=>renderEspnMatchCard(e,league)).join('');
@@ -565,8 +566,8 @@ async function loadMatches(league,silent=false){
    const unique=[...new Map(fixtures.map(e=>[e.id,e])).values()];
    provider='ESPN';
    box.innerHTML=unique.map(e=>renderEspnMatchCard(e,league)).join('');
-   try{localStorage.setItem('mailnews-fixtures-'+league+'-'+matchStartDate,JSON.stringify({savedAt:Date.now(),events:unique}))}catch{}
-   $('#matchStatus').textContent=unique.length+' pertandingan · ESPN · '+matchStartDate+' s.d. '+dateParam(espnEnd)+(dayErrors.length?' · sebagian tanggal gagal ('+dayErrors.length+')':'')+(apiMessage?' · '+apiMessage:'')+' · diperbarui '+new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+   try{localStorage.setItem('mailnews-fixtures-'+league+'-'+requestedStartDate,JSON.stringify({savedAt:Date.now(),events:unique}))}catch{}
+   $('#matchStatus').textContent=unique.length+' pertandingan · ESPN · '+requestedStartDate+' s.d. '+dateParam(espnEnd)+(dayErrors.length?' · sebagian tanggal gagal ('+dayErrors.length+')':'')+(apiMessage?' · '+apiMessage:'')+' · diperbarui '+new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
    matchUpdatedAt=new Date();return;
   }
   apiMessage=dayErrors.length?'ESPN gagal pada '+dayErrors.length+' dari 8 tanggal: '+dayErrors[0]:'Belum ada pertandingan dalam 8 hari ke depan.';
@@ -579,7 +580,7 @@ async function loadMatches(league,silent=false){
    box.innerHTML=savedSchedule.events.map(e=>renderEspnMatchCard(e,league)).join('');
    $('#matchStatus').textContent='Data terbaru gagal dimuat · menampilkan '+savedSchedule.events.length+' pertandingan tersimpan dari '+new Date(savedSchedule.savedAt).toLocaleString('id-ID')+(apiMessage?' · '+apiMessage:'');
   }else{
-   box.innerHTML='<div class="empty">Jadwal belum tersedia untuk kompetisi ini. '+esc(apiMessage||'Sumber belum mengirimkan pertandingan dalam rentang 8 hari mulai '+matchStartDate+'.')+'</div>';
+   box.innerHTML='<div class="empty">Jadwal belum tersedia untuk kompetisi ini. '+esc(apiMessage||'Sumber belum mengirimkan pertandingan dalam rentang 8 hari mulai '+requestedStartDate+'.')+'</div>';
    $('#matchStatus').textContent='Data jadwal belum tersedia'+(apiMessage?' · '+apiMessage:'');
   }
   matchUpdatedAt=new Date();
