@@ -18,8 +18,8 @@ Buka https://hurahurafestival.github.io/mailnews/ atau jalankan `index.html` mel
 - Rekomendasi berita terkait pada halaman artikel agar pembaca tetap menjelajah di mailnews.
 - Halaman ringkasan artikel dengan tautan ke penerbit asli.
 - Jadwal dan skor pertandingan dari ESPN untuk Premier League, La Liga, Serie A, Bundesliga, dan Liga Champions.
-- Pusat pertandingan memperbarui daftar skor setiap 60 detik saat tab jadwal terbuka; halaman detail pertandingan memeriksa pembaruan setiap 30 detik selama halaman aktif.
-- Klasemen diperiksa ulang saat hasil pertandingan selesai terdeteksi dan memiliki pembaruan cadangan setiap 5 menit saat panel klasemen terbuka.
+- Pusat pertandingan memperbarui daftar skor setiap 60 detik saat tab jadwal terbuka, menyediakan tombol pembaruan manual, dan menangani pergantian kompetisi ketika permintaan sebelumnya masih berjalan; halaman detail pertandingan memeriksa pembaruan setiap 30 detik tanpa memakai cache browser.
+- Klasemen diperiksa ulang saat hasil pertandingan selesai terdeteksi dan memiliki pembaruan cadangan setiap 5 menit saat panel klasemen terbuka; permintaan data klasemen dan skor memakai kebijakan tanpa cache browser agar tidak sengaja menampilkan respons cache lama.
 - OpenLigaDB menjadi sumber cadangan klasemen Bundesliga jika ESPN gagal, dengan label sumber dan waktu pembaruan. OpenLigaDB dikelola komunitas, sehingga bukan pengganti verifikasi resmi.
 - Halaman detail pertandingan dengan statistik dan susunan pemain jika disediakan oleh ESPN.
 - Klasemen dunia dengan pilihan 46 liga/kompetisi dari Asia, Eropa, Amerika Utara, Amerika Selatan, Afrika, dan turnamen internasional; data ditarik dari endpoint ESPN dan hanya ditampilkan jika tersedia.
