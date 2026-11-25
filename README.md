@@ -18,6 +18,7 @@ Buka https://hurahurafestival.github.io/mailnews/ atau jalankan `index.html` mel
 - Rekomendasi berita terkait pada halaman artikel agar pembaca tetap menjelajah di mailnews.
 - Halaman ringkasan artikel dengan tautan ke penerbit asli.
 - Pusat pertandingan menggunakan API-Football melalui Cloudflare Worker untuk liga yang terpetakan, dengan ESPN sebagai fallback bila tersedia.
+- Navigasi tanggal jadwal dengan tombol hari sebelumnya/berikutnya dan kalender; setiap tanggal menyajikan rentang 8 hari serta cache terpisah agar jadwal lama tidak tertukar dengan tanggal lain.
 - Filter **Semua Live** untuk skor pertandingan yang sedang berlangsung lintas kompetisi, serta **Jadwal Hari Ini** untuk pertandingan dari semua liga yang tersedia.
 - Pilihan liga Indonesia, K League 1 Korea Selatan, A-League Men Australia, dan Chinese Super League menggunakan ID kompetisi API-Football yang terverifikasi.
 - Pusat pertandingan memperbarui daftar skor setiap 60 detik saat tab jadwal terbuka, menyediakan tombol pembaruan manual, dan menangani pergantian kompetisi ketika permintaan sebelumnya masih berjalan; halaman detail pertandingan memeriksa pembaruan setiap 30 detik tanpa memakai cache browser.
