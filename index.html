@@ -62,7 +62,7 @@ async function loadFeed(feed){
   return (json.items||[]).map(x=>{
    let host='';try{host=new URL(x.link).hostname.replace(/^www\./,'')}catch{}
    const author=cleanHtml(x.author||'');
-   const rawTitle=cleanHtml(x.title),titleSource=rawTitle.match(/\\s[-–|]\\s([^–—-]{2,60})$/);
+   const rawTitle=cleanHtml(x.title),titleSource=rawTitle.match(/\s[-–|]\s([^–—-]{2,60})$/);
    const source=author&&author.toLowerCase()!=='google news'?author:titleSource?titleSource[1]:host==='news.google.com'?'Penerbit melalui Google News':host||'Penerbit berita';
    return {title:rawTitle,description:cleanHtml(x.description).slice(0,220),url:x.link,date:x.pubDate,image:imageFrom(x),category:feed.category,source};
   });
