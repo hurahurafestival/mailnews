@@ -327,8 +327,8 @@ async function loadStandings(league,force=false){
     return;
    }catch(secondaryError){}
   }
-  $('#standingsStatus').textContent='Klasemen tidak tersedia';
-  box.innerHTML='<div class="empty">'+esc(label)+' belum menyediakan data klasemen dari sumber yang tersedia. Mailnews tidak membuat angka sendiri. <button class="filter active" onclick="loadStandings(currentStanding,true)">Coba lagi</button></div>';
+  $('#standingsStatus').textContent='Klasemen tidak tersedia · '+String(e?.message||e);
+  box.innerHTML='<div class="empty">'+esc(label)+' belum menyediakan data klasemen dari sumber yang tersedia. '+esc(e?.message||'Periksa koneksi dan cakupan musim kompetisi')+'. Mailnews tidak membuat angka sendiri. <button class="filter active" onclick="loadStandings(currentStanding,true)">Coba lagi</button></div>';
  }
 }
 
