@@ -379,7 +379,7 @@ async function loadStandings(league,force=false){
      if(!apiResponse.ok||apiData.errors&&Object.keys(apiData.errors).length){apiFailure='API-Football HTTP '+apiResponse.status+' · '+JSON.stringify(apiData.errors||apiData.error||{});continue}
      const apiRows=apiData.response?.[0]?.league?.standings?.flat()||[];
      if(!apiRows.length){apiFailure='Klasemen belum tersedia untuk musim '+season;continue}
-     const rows=apiRows.map(x=>({name:x.team?.name||'Klub',logo:clubLogo(x.team?.name,x.team?.logo)||x.team?.logo||'',played:x.all?.played??'—',won:x.all?.win??'—',drawn:x.all?.draw??'—',lost:x.all?.lose??'—',gf:x.all?.goals?.for??'—',ga:x.all?.goals?.against??'—',gd:x.goalsDiff??'—',points:x.points??'—',rank:x.rank??'—',zone:x.description||''}));
+     const rows=apiRows.map(x=>({name:x.team?.name||'Klub',logo:x.team?.logo||'',played:x.all?.played??'—',won:x.all?.win??'—',drawn:x.all?.draw??'—',lost:x.all?.lose??'—',gf:x.all?.goals?.for??'—',ga:x.all?.goals?.against??'—',gd:x.goalsDiff??'—',points:x.points??'—',rank:x.rank??'—',zone:x.description||''}));
      const decoratedRows=decorateStandingRows(league,rows);
      standingCache[league]={time:Date.now(),rows:decoratedRows};
      box.innerHTML=standingsTableMarkup(decoratedRows);
@@ -397,7 +397,7 @@ async function loadStandings(league,force=false){
   if(!entries.length)throw Error('Penyedia tidak mengirim klasemen untuk kompetisi ini');
   const rows=entries.map(e=>({
    name:e.team?.displayName||e.team?.name||'Klub',
-   logo:clubLogo(e.team?.displayName||e.team?.name,e.team?.logos?.[0]?.href||e.team?.logo||'')||e.team?.logos?.[0]?.href||e.team?.logo||'',
+   logo:e.team?.logos?.[0]?.href||e.team?.logo||'',
    played:statValue(e,['gamesplayed','played','gp']),
    won:statValue(e,['wins','won','w']),
    drawn:statValue(e,['ties','draws','d']),
