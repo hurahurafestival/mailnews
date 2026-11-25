@@ -144,7 +144,7 @@ function setFilter(f){active=f;document.querySelectorAll('[data-filter]').forEac
 document.querySelectorAll('[data-filter]').forEach(b=>b.addEventListener('click',()=>{showView('news');setFilter(b.dataset.filter)}));
 function showView(view){$('#matchCenter').hidden=view!=='matches';$('#standingsPanel').hidden=view!=='standings';$('#newsSection').hidden=view!=='news';$('#editorialSection').hidden=view!=='news';document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));$('#sidebar').classList.remove('open');$('#overlay').classList.remove('show');if(view==='matches')loadMatches(currentLeague);if(view==='standings')loadStandings(currentStanding)}
 document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.view)));
-let currentLeague='eng.1';const leagueNames={'eng.1':'Premier League','esp.1':'La Liga','ita.1':'Serie A','ger.1':'Bundesliga','idn.1':'Liga 1 Indonesia','uefa.champions':'Liga Champions'};
+let currentLeague='eng.1';const leagueNames={'eng.1':'Premier League','esp.1':'La Liga','ita.1':'Serie A','ger.1':'Bundesliga','idn.1':'Liga 1 Indonesia','kor.1':'K League 1','aus.1':'A-League Men','chn.1':'Chinese Super League','uefa.champions':'Liga Champions'};
 document.querySelectorAll('[data-league]').forEach(b=>b.addEventListener('click',()=>{currentLeague=b.dataset.league;document.querySelectorAll('[data-league]').forEach(x=>x.classList.toggle('active',x===b));loadMatches(currentLeague)}));
 $('#refreshMatches').addEventListener('click',()=>loadMatches(currentLeague));
 
@@ -242,7 +242,7 @@ async function loadStandings(league,force=false){
   return;
  }
  try{
-  const apiLeague={'idn.1':194,'eng.1':39,'esp.1':140,'ita.1':135,'ger.1':78,'uefa.champions':2}[league];
+  const apiLeague={'idn.1':194,'kor.1':219,'aus.1':49,'chn.1':118,'eng.1':39,'esp.1':140,'ita.1':135,'ger.1':78,'uefa.champions':2}[league];
   if(apiLeague){
    let apiFailure='API-Football tidak mengembalikan klasemen';
    const seasons=[new Date().getFullYear(),new Date().getFullYear()-1];
@@ -341,7 +341,7 @@ async function loadMatches(league,silent=false){
  const box=$('#matchGrid');
  if(!silent){$('#matchStatus').textContent='Memuat '+(leagueNames[league]||league)+'…';box.innerHTML='<div class="skeleton"></div><div class="skeleton"></div>'}
  try{
-  const apiLeague={'idn.1':194,'eng.1':39,'esp.1':140,'ita.1':135,'ger.1':78,'uefa.champions':2}[league];
+  const apiLeague={'idn.1':194,'kor.1':219,'aus.1':49,'chn.1':118,'eng.1':39,'esp.1':140,'ita.1':135,'ger.1':78,'uefa.champions':2}[league];
   let apiLiveCards='',apiScheduleCards='',apiLiveCount=0,apiScheduleCount=0,apiProviderError='';
   if(apiLeague){
    try{
