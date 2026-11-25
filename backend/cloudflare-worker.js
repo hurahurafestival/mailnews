@@ -27,7 +27,7 @@ function json(data, status, origin, extra = {}) {
 }
 
 function validDate(value) {
-  return /^\\d{4}-\\d{2}-\\d{2}$/.test(value || "") &&
+  return /^\d{4}-\d{2}-\d{2}$/.test(value || "") &&
     !Number.isNaN(Date.parse(value + "T00:00:00Z"));
 }
 
@@ -49,7 +49,7 @@ export default {
       return json({ error: "API key belum dikonfigurasi di Worker secret APIFOOTBALL_KEY." }, 503, origin);
     }
 
-    const path = url.pathname.replace(/\\/+$/, "") || "/";
+    const path = "/" + url.pathname.split("/").filter(Boolean).join("/");
     const params = new URLSearchParams();
     let cacheSeconds = 60;
 
@@ -62,7 +62,7 @@ export default {
       if (live === "all") {
         params.set("live", "all");
         cacheSeconds = 15;
-      } else if (id && /^\\d{1,12}$/.test(id)) {
+      } else if (id && /^\d{1,12}$/.test(id)) {
         params.set("id", id);
         cacheSeconds = 30;
       } else if (validDate(date)) {
@@ -75,7 +75,7 @@ export default {
     } else if (path === "/standings") {
       const league = url.searchParams.get("league");
       const season = url.searchParams.get("season");
-      if (!/^\\d{1,6}$/.test(league || "") || !/^\\d{4}$/.test(season || "")) {
+      if (!/^\d{1,6}$/.test(league || "") || !/^\d{4}$/.test(season || "")) {
         return json({ error: "Parameter league (ID numerik) dan season (YYYY) wajib." }, 400, origin);
       }
       params.set("league", league);
