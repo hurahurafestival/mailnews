@@ -32,7 +32,7 @@
 <section class="welcome"><div><div class="eyebrow">THE FOOTBALL DAILY</div><h1>Gairah sepak bola,<br>ada di sini.</h1><p>Berita terbaru dari lapangan Indonesia hingga dunia.</p></div><div class="live-pill"><i></i>UPDATE BERITA</div></section>
 <section class="hero" id="featuredHero"><div class="hero-content"><span class="tag" id="featuredTag">PILIHAN OTOMATIS</span><h2 id="featuredTitle">Semua cerita sepak bola, dalam satu tempat.</h2><p id="featuredSummary">Berita utama pilihan otomatis dari feed yang tersedia.</p><div class="hero-meta" id="featuredMeta">MAILNEWS EDITORIAL • BERITA SEPAK BOLA</div><p style="margin:17px 0 0"><a id="featuredLink" class="filter active" href="#newsSection" style="display:inline-block;text-decoration:none">Baca ringkasan ↗</a></p></div></section>
 <section id="editorialSection"><div class="section-head"><h2>Berita pilihan</h2><small>Urutan otomatis berdasarkan relevansi feed dan kebaruan</small></div><div class="editorial-grid" id="editorialGrid"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div></section>
-<section id="matchCenter" hidden><div class="section-head"><h2>Jadwal & hasil pertandingan</h2><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><small id="matchStatus">Pilih kompetisi</small><button class="filter active" id="refreshMatches" type="button">↻ Perbarui</button></div></div><div class="filters" id="leagueFilters"><button class="filter active" data-league="eng.1">Premier League</button><button class="filter" data-league="esp.1">La Liga</button><button class="filter" data-league="ita.1">Serie A</button><button class="filter" data-league="ger.1">Bundesliga</button><button class="filter" data-league="uefa.champions">Liga Champions</button><button class="filter" data-league="idn.1">Liga Indonesia</button><button class="filter" data-league="kor.1">K League 1</button><button class="filter" data-league="aus.1">A-League</button><button class="filter" data-league="chn.1">Chinese Super League</button></div><div id="matchGrid" class="news-grid"></div><p style="color:var(--muted);font-size:11px">Data pertandingan dari API-Football dan ESPN sebagai sumber cadangan. Ketersediaan mengikuti cakupan kompetisi.</p></section><section id="standingsPanel" hidden>
+<section id="matchCenter" hidden><div class="section-head"><h2>Jadwal & hasil pertandingan</h2><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><small id="matchStatus">Pilih kompetisi</small><button class="filter active" id="refreshMatches" type="button">↻ Perbarui</button></div></div><div class="filters" id="leagueFilters"><button class="filter active" data-league="eng.1">Premier League</button><button class="filter" data-league="esp.1">La Liga</button><button class="filter" data-league="ita.1">Serie A</button><button class="filter" data-league="ger.1">Bundesliga</button><button class="filter" data-league="uefa.champions">Liga Champions</button><button class="filter" data-league="idn.1">Liga Indonesia</button><button class="filter" data-league="kor.1">K League 1</button><button class="filter" data-league="aus.1">A-League</button><button class="filter" data-league="chn.1">Chinese Super League</button><button class="filter" data-league="all-live">Semua Live</button><button class="filter" data-league="all-today">Jadwal Hari Ini</button></div><div id="matchGrid" class="news-grid"></div><p style="color:var(--muted);font-size:11px">Data pertandingan dari API-Football dan ESPN sebagai sumber cadangan. Ketersediaan mengikuti cakupan kompetisi.</p></section><section id="standingsPanel" hidden>
 <div class="section-head"><h2>Klasemen liga dunia</h2><small id="standingsStatus">Pilih wilayah dan kompetisi</small></div>
 <div class="filters" style="align-items:center;flex-wrap:wrap">
 <select id="standingRegion" class="filter" aria-label="Pilih wilayah" style="color:var(--text);background:var(--panel)"><option value="Semua">🌍 Semua wilayah</option></select>
@@ -270,6 +270,22 @@ async function loadStandings(league,force=false){
   return;
  }
  try{
+  if(league==='all-live'||league==='all-today'){
+   const now=new Date(),dateParam=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+   const endpoint=league==='all-live'?'fixtures?live=all':'fixtures?date='+dateParam(now);
+   const response=await fetch('https://mailnews-footbal-api.hurahurafestival.workers.dev/'+endpoint,{cache:'no-store'});
+   const data=await response.json();
+   if(!response.ok)throw Error(data.error||'API-Football HTTP '+response.status);
+   const fixtures=data.response||[];
+   const label=league==='all-live'?'Semua pertandingan live':'Jadwal seluruh liga hari ini';
+   $('#matchStatus').textContent=fixtures.length+' pertandingan · '+label+' · API-Football · diperbarui '+new Date().toLocaleTimeString('id-ID');
+   if(!fixtures.length){box.innerHTML='<div class="empty">Tidak ada pertandingan '+(league==='all-live'?'yang sedang berlangsung':'terjadwal hari ini')+' pada kompetisi yang tersedia.</div>';return}
+   box.innerHTML=fixtures.map(f=>{
+    const home=f.teams?.home||{},away=f.teams?.away||{},goals=f.goals||{},status=f.fixture?.status||{},live=!!status.elapsed||['1H','HT','2H','ET','BT','P','LIVE'].includes(status.short),done=['FT','AET','PEN'].includes(status.short),when=f.fixture?.date?new Date(f.fixture.date).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'}):'Waktu belum tersedia';
+    return '<article class="news-card news-body"><div class="eyebrow">'+esc(f.league?.country||'Dunia')+' · '+esc(f.league?.name||'Kompetisi')+' · API-Football</div><h3>'+esc(home.name||'TBD')+' <span style="color:var(--green)">'+(live||done?esc(goals.home??0)+' – '+esc(goals.away??0):'vs')+'</span> '+esc(away.name||'TBD')+'</h3><p>'+esc(when)+' · '+esc(status.long||'Terjadwal')+'</p><div class="news-meta"><span>'+(live?'<strong style="color:#e45b5b">● LIVE</strong>':done?'Selesai':'Jadwal')+'</span><a href="match.html?fixture='+encodeURIComponent(f.fixture?.id||'')+'">DETAIL ↗</a></div></article>';
+   }).join('');
+   return;
+  }
   const apiConfig=await resolveApiLeague(league); const apiLeague=apiConfig?.id;
   if(apiLeague){
    let apiFailure='API-Football tidak mengembalikan klasemen';
