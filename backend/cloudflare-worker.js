@@ -51,6 +51,7 @@ export default {
 
     const path = "/" + url.pathname.split("/").filter(Boolean).join("/");
     const params = new URLSearchParams();
+    const bypassCache = url.searchParams.get("refresh") === "1";
     let cacheSeconds = 60;
 
     if (path === "/health") {
@@ -108,7 +109,7 @@ export default {
     const target = API_BASE + path + "?" + params.toString();
     const cacheKey = new Request(target, { method: "GET" });
     const cache = caches.default;
-    const cached = await cache.match(cacheKey);
+    const cached = bypassCache ? null : await cache.match(cacheKey);
     if (cached) {
       const headers = new Headers(cached.headers);
       Object.entries(corsHeaders(origin)).forEach(([k, v]) => headers.set(k, v));
@@ -119,7 +120,7 @@ export default {
     try {
       const upstream = await fetch(target, {
         headers: { "x-apisports-key": env.APIFOOTBALL_KEY },
-        cf: { cacheTtl: cacheSeconds, cacheEverything: true }
+        cf: bypassCache ? { cacheTtl: 0, cacheEverything: false } : { cacheTtl: cacheSeconds, cacheEverything: true }
       });
       const body = await upstream.text();
       let parsed;
@@ -138,7 +139,7 @@ export default {
         ...corsHeaders(origin)
       });
       const response = new Response(JSON.stringify(parsed), { status: 200, headers });
-      ctx.waitUntil(cache.put(cacheKey, response.clone()));
+      if (!bypassCache) ctx.waitUntil(cache.put(cacheKey, response.clone()));
       return response;
     } catch (error) {
       return json({ error: "Tidak dapat terhubung ke penyedia data.", details: String(error) }, 502, origin);
