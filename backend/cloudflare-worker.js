@@ -59,20 +59,31 @@ export default {
       const live = url.searchParams.get("live");
       const id = url.searchParams.get("id");
       const date = url.searchParams.get("date");
+      const league = url.searchParams.get("league");
+      const season = url.searchParams.get("season");
+      const from = url.searchParams.get("from");
+      const to = url.searchParams.get("to");
       if (live === "all") {
         params.set("live", "all");
-        const league = url.searchParams.get("league");
         if (league && /^\d{1,6}$/.test(league)) params.set("league", league);
         cacheSeconds = 15;
       } else if (id && /^\d{1,12}$/.test(id)) {
         params.set("id", id);
         cacheSeconds = 30;
+      } else if (validDate(from) && validDate(to) && league && /^\d{1,6}$/.test(league) && season && /^\d{4}$/.test(season)) {
+        params.set("from", from);
+        params.set("to", to);
+        params.set("league", league);
+        params.set("season", season);
+        params.set("timezone", "Asia/Jakarta");
+        cacheSeconds = 300;
       } else if (validDate(date)) {
         params.set("date", date);
+        if (league && /^\d{1,6}$/.test(league)) params.set("league", league);
         params.set("timezone", "Asia/Jakarta");
         cacheSeconds = 60;
       } else {
-        return json({ error: "Gunakan ?live=all, ?id=ID, atau ?date=YYYY-MM-DD." }, 400, origin);
+        return json({ error: "Gunakan ?live=all&league=ID, ?id=ID, ?date=YYYY-MM-DD, atau ?from=YYYY-MM-DD&to=YYYY-MM-DD&league=ID&season=YYYY." }, 400, origin);
       }
     } else if (path === "/standings") {
       const league = url.searchParams.get("league");
