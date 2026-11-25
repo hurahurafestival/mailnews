@@ -49,24 +49,24 @@ export default {
 
     // Official AFC fallback for Indonesian domestic league standings.
     // This route is independent of the API-Football subscription/key.
-    if (path === "/afc/indonesia-standings") {
+    if (path === "/afc/indonesia-standings" || path === "/afc/indonesia-fixtures") {
       try {
         const upstream = await fetch("https://www.the-afc.com/en/livescores/asian_leagues/association/MA03", {
           headers: { "User-Agent": "Mozilla/5.0 (compatible; Mailnews/1.0)", "Accept": "text/html" },
-          cf: { cacheTtl: 300, cacheEverything: true }
+          cf: { cacheTtl: path.endsWith("fixtures") ? 180 : 300, cacheEverything: true }
         });
         if (!upstream.ok) return json({ error: "AFC menolak permintaan.", providerStatus: upstream.status }, upstream.status, origin);
         return new Response(await upstream.text(), {
           status: 200,
           headers: {
             "Content-Type": "text/html; charset=utf-8",
-            "Cache-Control": "public, max-age=0, s-maxage=300",
+            "Cache-Control": "public, max-age=0, s-maxage=" + (path.endsWith("fixtures") ? 180 : 300),
             "X-Mailnews-Provider": "AFC",
             ...corsHeaders(origin)
           }
         });
       } catch (error) {
-        return json({ error: "Tidak dapat mengambil klasemen dari AFC.", details: String(error) }, 502, origin);
+        return json({ error: "Tidak dapat mengambil data AFC.", details: String(error) }, 502, origin);
       }
     }
 
