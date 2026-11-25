@@ -25,6 +25,8 @@ Buka https://hurahurafestival.github.io/mailnews/ atau jalankan `index.html` mel
 - Klasemen diperiksa ulang saat hasil pertandingan selesai terdeteksi dan memiliki pembaruan cadangan setiap 5 menit saat panel klasemen terbuka; permintaan data klasemen dan skor memakai kebijakan tanpa cache browser agar tidak sengaja menampilkan respons cache lama.
 - OpenLigaDB menjadi sumber cadangan klasemen Bundesliga jika ESPN gagal, dengan label sumber dan waktu pembaruan. OpenLigaDB dikelola komunitas, sehingga bukan pengganti verifikasi resmi.
 - Halaman detail pertandingan API-Football: skor/status, kejadian (gol, kartu, pergantian pemain), statistik tim, susunan pemain, dan statistik pemain jika tersedia dari cakupan kompetisi.
+- Halaman detail pertandingan ESPN kini juga mencoba menampilkan kronologi kejadian dan statistik pemain dari ringkasan pertandingan jika disediakan oleh ESPN; grafik perbandingan statistik tim dihitung dari nilai kandang/tandang yang tersedia.
+- Penyegaran detail pertandingan memiliki pengunci permintaan agar polling 30 detik dan pembukaan kembali tab tidak menumpuk permintaan ketika jaringan lambat.
 - Klasemen dunia dengan pilihan 46 liga/kompetisi dari Asia, Eropa, Amerika Utara, Amerika Selatan, Afrika, dan turnamen internasional; data ditarik dari endpoint ESPN dan hanya ditampilkan jika tersedia.
 - Filter wilayah dan kompetisi, tombol pembaruan manual, kolom main/menang/seri/kalah/gol memasukkan/gol kemasukan/selisih gol/poin, serta cache klasemen maksimal 5 menit.
 - Direktori 26 klub dan halaman profil, berita klub, stadion, serta skuad untuk klub yang didukung penyedia data.
