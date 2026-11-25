@@ -233,7 +233,7 @@ function decorateStandingRows(league,rows){
  const current={};
  const decorated=rows.map((row,i)=>{
   const rank=Number(row.rank)||i+1,old=Number(previous[row.name]),delta=Number.isFinite(old)&&old>0?old-rank:0;
-  let zone='';
+  let zone=row.zone||'';
   if(league==='idn.1'){
    if(rank===1)zone='Kualifikasi AFC';
    else if(rank===2)zone='AFC Challenge League';
@@ -377,7 +377,7 @@ async function loadStandings(league,force=false){
      if(!apiResponse.ok||apiData.errors&&Object.keys(apiData.errors).length){apiFailure='API-Football HTTP '+apiResponse.status+' · '+JSON.stringify(apiData.errors||apiData.error||{});continue}
      const apiRows=apiData.response?.[0]?.league?.standings?.flat()||[];
      if(!apiRows.length){apiFailure='Klasemen belum tersedia untuk musim '+season;continue}
-     const rows=apiRows.map(x=>({name:x.team?.name||'Klub',logo:x.team?.logo||'',played:x.all?.played??'—',won:x.all?.win??'—',drawn:x.all?.draw??'—',lost:x.all?.lose??'—',gf:x.all?.goals?.for??'—',ga:x.all?.goals?.against??'—',gd:x.goalsDiff??'—',points:x.points??'—',rank:x.rank??'—'}));
+     const rows=apiRows.map(x=>({name:x.team?.name||'Klub',logo:x.team?.logo||'',played:x.all?.played??'—',won:x.all?.win??'—',drawn:x.all?.draw??'—',lost:x.all?.lose??'—',gf:x.all?.goals?.for??'—',ga:x.all?.goals?.against??'—',gd:x.goalsDiff??'—',points:x.points??'—',rank:x.rank??'—',zone:x.description||''}));
      const decoratedRows=decorateStandingRows(league,rows);
      standingCache[league]={time:Date.now(),rows:decoratedRows};
      box.innerHTML=standingsTableMarkup(decoratedRows);
@@ -404,7 +404,8 @@ async function loadStandings(league,force=false){
    ga:statValue(e,['pointsagainst','goalsagainst','ga']),
    gd:statValue(e,['pointdifferential','goaldifference','gd']),
    points:statValue(e,['points','pts']),
-   rank:statValue(e,['rank','playoffseed'])
+   rank:statValue(e,['rank','playoffseed']),
+   zone:typeof e.note==='string'?e.note:(e.note?.text||e.description||'')
   }));
   const decoratedRows=decorateStandingRows(league,rows);
   standingCache[league]={time:Date.now(),rows:decoratedRows};
