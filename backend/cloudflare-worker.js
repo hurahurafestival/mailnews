@@ -45,11 +45,34 @@ export default {
     if (origin && !ALLOWED_ORIGINS.has(origin)) {
       return json({ error: "Origin not allowed" }, 403, origin);
     }
+    const path = "/" + url.pathname.split("/").filter(Boolean).join("/");
+
+    // Official AFC fallback for Indonesian domestic league standings.
+    // This route is independent of the API-Football subscription/key.
+    if (path === "/afc/indonesia-standings") {
+      try {
+        const upstream = await fetch("https://www.the-afc.com/en/livescores/asian_leagues/association/MA03", {
+          headers: { "User-Agent": "Mozilla/5.0 (compatible; Mailnews/1.0)", "Accept": "text/html" },
+          cf: { cacheTtl: 300, cacheEverything: true }
+        });
+        if (!upstream.ok) return json({ error: "AFC menolak permintaan.", providerStatus: upstream.status }, upstream.status, origin);
+        return new Response(await upstream.text(), {
+          status: 200,
+          headers: {
+            "Content-Type": "text/html; charset=utf-8",
+            "Cache-Control": "public, max-age=0, s-maxage=300",
+            "X-Mailnews-Provider": "AFC",
+            ...corsHeaders(origin)
+          }
+        });
+      } catch (error) {
+        return json({ error: "Tidak dapat mengambil klasemen dari AFC.", details: String(error) }, 502, origin);
+      }
+    }
+
     if (!env.APIFOOTBALL_KEY) {
       return json({ error: "API key belum dikonfigurasi di Worker secret APIFOOTBALL_KEY." }, 503, origin);
     }
-
-    const path = "/" + url.pathname.split("/").filter(Boolean).join("/");
     const params = new URLSearchParams();
     const bypassCache = url.searchParams.get("refresh") === "1";
     let cacheSeconds = 60;
