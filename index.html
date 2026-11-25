@@ -338,9 +338,26 @@ async function loadMatches(league,silent=false){
  if(!silent){$('#matchStatus').textContent='Memuat '+(leagueNames[league]||league)+'…';box.innerHTML='<div class="skeleton"></div><div class="skeleton"></div>'}
  try{
   const apiLeague={'eng.1':39,'esp.1':140,'ita.1':135,'ger.1':78,'uefa.champions':2}[league];
-  let apiLiveCards='',apiLiveCount=0;
+  let apiLiveCards='',apiScheduleCards='',apiLiveCount=0,apiScheduleCount=0,apiProviderError='';
   if(apiLeague){
    try{
+    const now=new Date(),end=new Date(now);end.setDate(end.getDate()+7);
+    const dateParam=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    const season=now.getFullYear();
+    const scheduleUrl='https://mailnews-footbal-api.hurahurafestival.workers.dev/fixtures?from='+dateParam(now)+'&to='+dateParam(end)+'&league='+apiLeague+'&season='+season;
+    const scheduleResponse=await fetch(scheduleUrl,{cache:'no-store'});
+    if(scheduleResponse.ok){
+     const scheduleData=await scheduleResponse.json(),fixtures=scheduleData.response||[];
+     apiScheduleCount=fixtures.length;
+     apiScheduleCards=fixtures.map(f=>{
+      const home=f.teams?.home||{},away=f.teams?.away||{},goals=f.goals||{},status=f.fixture?.status||{},when=f.fixture?.date;
+      const live=!!status.elapsed||['1H','HT','2H','ET','BT','P','LIVE'].includes(status.short);
+      const done=['FT','AET','PEN'].includes(status.short);
+      const score=live||done?esc(goals.home??0)+' – '+esc(goals.away??0):'vs';
+      const time=when?new Date(when).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'}):'Waktu belum tersedia';
+      return '<article class="news-card news-body"><div class="eyebrow">'+esc(leagueNames[league]||league)+' · API-Football</div><h3>'+esc(home.name||'TBD')+' <span style="color:var(--green)">'+score+'</span> '+esc(away.name||'TBD')+'</h3><p>'+esc(time)+' · '+esc(status.long||'Terjadwal')+'</p><div class="news-meta"><span>'+(live?'<strong style="color:#e45b5b">● LIVE</strong>':done?'Selesai':'Jadwal')+'</span><span>API-Football</span></div></article>';
+     }).join('');
+    }else{apiProviderError='Jadwal API-Football HTTP '+scheduleResponse.status}
     const liveResponse=await fetch('https://mailnews-footbal-api.hurahurafestival.workers.dev/fixtures?live=all&league='+apiLeague,{cache:'no-store'});
     if(liveResponse.ok){
      const liveData=await liveResponse.json(),fixtures=liveData.response||[];
@@ -349,16 +366,16 @@ async function loadMatches(league,silent=false){
       const home=f.teams?.home||{},away=f.teams?.away||{},goals=f.goals||{},status=f.fixture?.status||{};
       return '<article class="news-card news-body"><div class="eyebrow">'+esc(leagueNames[league]||league)+' · API-Football</div><h3>'+esc(home.name||'TBD')+' <span style="color:var(--green)">'+esc(goals.home??0)+' – '+esc(goals.away??0)+'</span> '+esc(away.name||'TBD')+'</h3><p>'+esc(status.long||'Pertandingan berlangsung')+(status.elapsed!=null?' · menit '+esc(status.elapsed):'')+'</p><div class="news-meta"><span><strong style="color:#e45b5b">● LIVE</strong></span><span>Skor langsung</span></div></article>';
      }).join('');
-    }
-   }catch(apiError){console.warn('API-Football live unavailable',apiError)}
+    }else if(!apiProviderError){apiProviderError='Live API-Football HTTP '+liveResponse.status}
+   }catch(apiError){apiProviderError=String(apiError);console.warn('API-Football fixtures unavailable',apiError)}
   }
   const url='https://site.api.espn.com/apis/site/v2/sports/soccer/'+encodeURIComponent(league)+'/scoreboard?limit=100';
   const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw Error('ESPN unavailable');
   const data=await r.json(),events=data.events||[];
   matchUpdatedAt=new Date();
-  $('#matchStatus').textContent=(events.length+apiLiveCount)+' pertandingan · '+apiLiveCount+' live API-Football · jadwal/hasil ESPN · diperbarui '+matchUpdatedAt.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  if(!events.length&&!apiLiveCards){box.innerHTML='<div class="empty">Belum ada jadwal atau hasil yang tersedia dari sumber yang terhubung.</div>';return}
-  box.innerHTML=apiLiveCards+events.map(e=>{
+  $('#matchStatus').textContent=(events.length+apiScheduleCount+apiLiveCount)+' pertandingan · '+apiLiveCount+' live · '+apiScheduleCount+' jadwal API-Football · ESPN cadangan · diperbarui '+matchUpdatedAt.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  if(!events.length&&!apiLiveCards&&!apiScheduleCards){box.innerHTML='<div class="empty">Belum ada jadwal atau hasil yang tersedia dari sumber yang terhubung.</div>';return}
+  box.innerHTML=apiLiveCards+apiScheduleCards+events.map(e=>{
    const c=e.competitions?.[0],ts=c?.competitors||[],h=ts.find(t=>t.homeAway==='home')||ts[0],a=ts.find(t=>t.homeAway==='away')||ts[1],st=c?.status?.type,done=st?.completed,live=st?.state==='in';
    const status=done?'Selesai':live?'LIVE':st?.shortDetail||'Terjadwal';
    return '<article class="news-card news-body"><div class="eyebrow">'+esc(leagueNames[league]||league)+' · ESPN</div><h3>'+esc(h?.team?.displayName||'TBD')+' <span style="color:var(--green)">'+(done||live?esc(h?.score??'0')+' – '+esc(a?.score??'0'):'vs')+'</span> '+esc(a?.team?.displayName||'TBD')+'</h3><p>'+esc(st?.shortDetail||new Date(e.date).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'}))+'</p><div class="news-meta"><span>'+(live?'<strong style="color:#e45b5b">● LIVE</strong>':esc(status))+'</span><a href="match.html?event='+encodeURIComponent(e.id)+'&league='+encodeURIComponent(league)+'">DETAIL ↗</a></div></article>'
