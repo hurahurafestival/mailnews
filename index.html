@@ -369,7 +369,8 @@ async function loadMatches(league,silent=false){
     }else if(!apiProviderError){apiProviderError='Live API-Football HTTP '+liveResponse.status}
    }catch(apiError){apiProviderError=String(apiError);console.warn('API-Football fixtures unavailable',apiError)}
   }
-  const url='https://site.api.espn.com/apis/site/v2/sports/soccer/'+encodeURIComponent(league)+'/scoreboard?limit=100';
+  const espnStart=new Date(),espnEnd=new Date(espnStart);espnEnd.setDate(espnEnd.getDate()+7);const espnDate=d=>d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
+  const url='https://site.api.espn.com/apis/site/v2/sports/soccer/'+encodeURIComponent(league)+'/scoreboard?dates='+espnDate(espnStart)+'-'+espnDate(espnEnd)+'&limit=100';
   const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw Error('ESPN unavailable');
   const data=await r.json(),events=data.events||[];
   matchUpdatedAt=new Date();
