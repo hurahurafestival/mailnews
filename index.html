@@ -309,7 +309,7 @@ async function loadAfcIndonesiaFixtures(){
 }
 function matchCardAfc(f){
  const when=new Date(f.date).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'});
- return '<article class="news-card news-body"><div class="eyebrow">Liga Indonesia · Liga 1 · AFC</div><h3>'+esc(f.home)+' <span style="color:var(--green)">vs</span> '+esc(f.away)+'</h3><p>'+esc(when)+' · '+esc(f.status)+'</p><div class="news-meta"><span>Jadwal</span><a href="https://www.the-afc.com/en/livescores/asian_leagues/association/MA03" target="_blank" rel="noopener">SUMBER AFC ↗</a></div></article>';
+ return '<article class="news-card news-body"><div class="eyebrow">Liga Indonesia · Liga 1 · AFC</div><h3>'+clubLogo(f.home)+esc(f.home)+' <span style="color:var(--green)">vs</span> '+clubLogo(f.away)+esc(f.away)+'</h3><p>'+esc(when)+' · '+esc(f.status)+'</p><div class="news-meta"><span>Jadwal</span><a href="https://www.the-afc.com/en/livescores/asian_leagues/association/MA03" target="_blank" rel="noopener">SUMBER AFC ↗</a></div></article>';
 }
 const apiLeagueSearch={
  'idn.1':{id:194,searches:['Liga 1','Super League'],countries:['indonesia'],aliases:['liga 1','super league']},
