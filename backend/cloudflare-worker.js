@@ -126,30 +126,26 @@ export default {
         return new Response(cached.body, { status: cached.status, headers });
       }
       try {
-        const endpoints = [
-          ["fixture", "/fixtures?id=" + fixture],
-          ["events", "/fixtures/events?fixture=" + fixture],
-          ["statistics", "/fixtures/statistics?fixture=" + fixture],
-          ["lineups", "/fixtures/lineups?fixture=" + fixture]
-        ];
-        const results = await Promise.all(endpoints.map(async ([name, endpoint]) => {
-          try {
-            const upstream = await fetch(API_BASE + endpoint, {
-              headers: { "x-apisports-key": env.APIFOOTBALL_KEY },
-              cf: bypassCache ? { cacheTtl: 0, cacheEverything: false } : { cacheTtl: cacheSeconds, cacheEverything: true }
-            });
-            const raw = await upstream.text();
-            let data;
-            try { data = JSON.parse(raw); } catch { data = { error: "Respons bukan JSON." }; }
-            if (!upstream.ok || (data.errors && Object.keys(data.errors).length)) {
-              return [name, { available: false, status: upstream.status, error: data.errors || data.error || data }];
-            }
-            return [name, { available: true, response: data.response || [] }];
-          } catch (error) {
-            return [name, { available: false, error: String(error) }];
-          }
-        }));
-        const payload = Object.fromEntries(results);
+        const upstream = await fetch(target, {
+          headers: { "x-apisports-key": env.APIFOOTBALL_KEY },
+          cf: bypassCache ? { cacheTtl: 0, cacheEverything: false } : { cacheTtl: cacheSeconds, cacheEverything: true }
+        });
+        const raw = await upstream.text();
+        let parsed;
+        try { parsed = JSON.parse(raw); } catch { parsed = { error: "Respons bukan JSON." }; }
+        if (!upstream.ok || (parsed.errors && Object.keys(parsed.errors).length)) {
+          return json({ error: "Penyedia menolak permintaan detail pertandingan.", providerStatus: upstream.status, details: parsed.errors || parsed.error || parsed }, upstream.status, origin);
+        }
+        const item = parsed.response?.[0];
+        if (!item) return json({ error: "Detail pertandingan tidak tersedia." }, 404, origin);
+        const payload = {
+          fixture: { response: [item] },
+          events: { response: item.events || [] },
+          statistics: { response: item.statistics || [] },
+          lineups: { response: item.lineups || [] },
+          players: { response: item.players || [] },
+          provider: "API-Football"
+        };
         const response = new Response(JSON.stringify(payload), {
           status: 200,
           headers: {
