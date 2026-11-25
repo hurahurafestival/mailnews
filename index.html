@@ -331,8 +331,27 @@ async function loadMatches(league,silent=false){
    return '<article class="news-card news-body"><div class="eyebrow">'+esc(leagueNames[league]||league)+' · ESPN</div><h3>'+esc(h?.team?.displayName||'TBD')+' <span style="color:var(--green)">'+(done||live?esc(h?.score??'0')+' – '+esc(a?.score??'0'):'vs')+'</span> '+esc(a?.team?.displayName||'TBD')+'</h3><p>'+esc(st?.shortDetail||new Date(e.date).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'}))+'</p><div class="news-meta"><span>'+(live?'<strong style="color:#e45b5b">● LIVE</strong>':esc(status))+'</span><a href="match.html?event='+encodeURIComponent(e.id)+'&league='+encodeURIComponent(league)+'">DETAIL ↗</a></div></article>'
   }).join('');
  }catch(e){
-  $('#matchStatus').textContent='Sumber skor utama tidak tersedia';
-  if(!silent)box.innerHTML='<div class="empty">Data ESPN belum dapat diakses. Kami tidak menampilkan skor perkiraan. Coba perbarui lagi nanti.</div>';
+  if(league==='ger.1'){
+   try{
+    const season=new Date().getMonth()>=6?new Date().getFullYear():new Date().getFullYear()-1;
+    const backup=await fetch('https://api.openligadb.de/getmatchdata/bl1/'+season,{cache:'no-store'});
+    if(!backup.ok)throw Error('OpenLigaDB unavailable');
+    const matches=await backup.json();
+    const now=Date.now(),from=now-3*86400000,to=now+14*86400000;
+    const relevant=(Array.isArray(matches)?matches:[]).filter(x=>{const t=Date.parse(x.matchDateTimeUTC||x.matchDateTime||'');return t>=from&&t<=to}).sort((x,y)=>Date.parse(x.matchDateTimeUTC||x.matchDateTime)-Date.parse(y.matchDateTimeUTC||y.matchDateTime)).slice(0,40);
+    if(!relevant.length)throw Error('No backup fixtures');
+    box.innerHTML=relevant.map(x=>{
+     const result=(x.matchResults||[]).filter(v=>v.resultTypeID===2||v.resultTypeID===3).pop()||(x.matchResults||[]).slice(-1)[0];
+     const live=!x.matchIsFinished&&Date.now()>=Date.parse(x.matchDateTimeUTC||x.matchDateTime||'')&&Date.now()<=Date.parse(x.matchDateTimeUTC||x.matchDateTime||'')+3*3600000;
+     const date=x.matchDateTimeUTC||x.matchDateTime;
+     return '<article class="news-card news-body"><div class="eyebrow">Bundesliga · OpenLigaDB (cadangan)</div><h3>'+esc(x.team1?.teamName||'TBD')+' <span style="color:var(--green)">'+(result?esc(result.pointsTeam1)+' – '+esc(result.pointsTeam2):'vs')+'</span> '+esc(x.team2?.teamName||'TBD')+'</h3><p>'+esc(date?new Date(date).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'}):'Waktu belum tersedia')+'</p><div class="news-meta"><span>'+(x.matchIsFinished?'Selesai':live?'Status live belum terkonfirmasi':'Terjadwal')+'</span><span>OpenLigaDB</span></div></article>';
+    }).join('');
+    $('#matchStatus').textContent=relevant.length+' pertandingan · sumber cadangan OpenLigaDB · data komunitas';
+    return;
+   }catch(backupError){}
+  }
+  $('#matchStatus').textContent='Sumber skor tidak tersedia';
+  if(!silent)box.innerHTML='<div class="empty">Data dari sumber yang tersedia belum dapat diakses. Kami tidak menampilkan skor perkiraan. Coba perbarui lagi nanti.</div>';
  }finally{matchPollBusy=false}
 }
 setInterval(()=>{if(!$('#matchCenter').hidden&&document.visibilityState==='visible')loadMatches(currentLeague,true)},60*1000);
