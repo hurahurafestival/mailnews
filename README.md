@@ -49,3 +49,11 @@ Panduan deploy, daftar endpoint, aturan cache, dan batasan cakupan tersedia di [
 Worker Cloudflare `mailnews-footbal-api.hurahurafestival.workers.dev` menjadi sumber tambahan untuk skor live dan klasemen pada lima kompetisi yang sudah dipetakan: Premier League (39), La Liga (140), Serie A (135), Bundesliga (78), dan UEFA Champions League (2). Skor live API-Football ditampilkan bersama jadwal/hasil ESPN; klasemen API-Football dicoba lebih dahulu lalu ESPN menjadi fallback. Kompetisi lain tetap memakai ESPN dan fallback Bundesliga OpenLigaDB. Cakupan dan data aktual tetap mengikuti paket serta respons API-Football.
 
 Worker menerima filter `/fixtures?live=all&league=ID`; Secret `APIFOOTBALL_KEY` dikonfigurasi sebagai Cloudflare Worker secret. Jangan menyimpan key di frontend. Frontend dan Worker sudah diperiksa sintaksnya, tetapi respons data runtime dari API-Football belum dapat dikonfirmasi dari sesi pengembangan ini.
+
+
+### Perbaikan jadwal dan penyegaran klasemen (25 November 2026)
+
+- Worker `/fixtures` sekarang menerima rentang `from`, `to`, `league`, dan `season` untuk mengambil jadwal tujuh hari ke depan dari API-Football.
+- Frontend menampilkan jadwal rentang tujuh hari dari API-Football untuk lima liga yang dipetakan; ESPN juga diminta menampilkan rentang tujuh hari sebagai sumber cadangan.
+- Cache klasemen pada Worker dipersingkat menjadi 5 menit. Penyegaran otomatis frontend tetap berjalan ketika panel klasemen terbuka.
+- Kode frontend dan Worker lulus pemeriksaan sintaks. Akses pengujian eksternal dari sesi ini dibatasi, sehingga respons live provider dan tampilan aktual di browser belum dapat diverifikasi.
