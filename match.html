@@ -24,8 +24,41 @@ const params=new URLSearchParams(location.search),eventId=params.get('event')||'
 const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const saved=localStorage.getItem('mailnews-theme')||'dark';document.documentElement.dataset.theme=saved;$('theme').onclick=()=>{const t=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=t;localStorage.setItem('mailnews-theme',t)};
 function empty(el,msg){$(el).innerHTML='<div class="empty">'+esc(msg)+'</div>'}
-function getStats(data,competition){let rows=[];const sources=[data.boxscore?.teams,data.boxscore?.players,competition?.competitors];for(const source of sources){if(!Array.isArray(source))continue;for(const item of source){const stats=item.statistics||item.stats||[];if(Array.isArray(stats))for(const st of stats){const label=st.label||st.name||st.abbreviation;if(label)rows.push({label,home:st.displayValue??st.value??'—',side:item.homeAway||item.team?.displayName||''})}}}const map=new Map();for(const row of rows){if(!map.has(row.label))map.set(row.label,[]);map.get(row.label).push(row)}return [...map.entries()].map(([label,values])=>({label,values}))}
-function renderStats(data,competition){const rows=getStats(data,competition);if(!rows.length){empty('stats','Statistik belum disediakan untuk pertandingan ini.');return}const home=competition?.competitors?.find(x=>x.homeAway==='home'),away=competition?.competitors?.find(x=>x.homeAway==='away');const html=rows.slice(0,18).map(row=>{const vals=row.values;let h='—',a='—';if(vals.length>1){h=vals[0].home;a=vals[1].home}else{h=vals[0].home}return '<div class="stat"><span>'+esc(h)+'</span><div><strong>'+esc(row.label)+'</strong><div class="barline"><i style="width:50%"></i></div></div><span>'+esc(a)+'</span></div>'}).join('');$('stats').innerHTML=html}
+function getStats(data,competition){
+ const rows=new Map(),sources=[data.boxscore?.teams,competition?.competitors];
+ for(const source of sources){
+  if(!Array.isArray(source))continue;
+  for(const item of source){
+   const stats=item.statistics||item.stats||[];
+   if(!Array.isArray(stats))continue;
+   const side=item.homeAway||item.team?.homeAway||'';
+   for(const st of stats){
+    const label=st.label||st.name||st.abbreviation||st.type;
+    if(!label)continue;
+    if(!rows.has(label))rows.set(label,{label,home:'—',away:'—',values:[]});
+    const row=rows.get(label),value=st.displayValue??st.value??st.display??'—';
+    if(side==='home')row.home=value;else if(side==='away')row.away=value;else row.values.push(value);
+   }
+  }
+ }
+ for(const row of rows.values()){
+  if(row.home==='—'&&row.values.length)row.home=row.values[0];
+  if(row.away==='—'&&row.values.length>1)row.away=row.values[1];
+ }
+ return [...rows.values()];
+}
+function renderStats(data,competition){
+ const rows=getStats(data,competition);
+ if(!rows.length){empty('stats','Statistik belum disediakan untuk pertandingan ini.');return}
+ const html=rows.slice(0,20).map(row=>{
+  const h=String(row.home??'—'),a=String(row.away??'—');
+  const hn=Number(h.replace('%','').replace(',','.')),an=Number(a.replace('%','').replace(',','.'));
+  const total=Number.isFinite(hn)&&Number.isFinite(an)&&hn+an>0?hn+an:0;
+  const width=total?Math.max(3,Math.min(97,hn/total*100)):50;
+  return '<div class="stat"><span>'+esc(h)+'</span><div><strong>'+esc(row.label)+'</strong><div class="barline"><i style="width:'+width+'%"></i></div></div><span>'+esc(a)+'</span></div>';
+ }).join('');
+ $('stats').innerHTML=html;
+}
 function renderLineups(data){const players=data.rosters||data.boxscore?.players||[];if(!Array.isArray(players)||!players.length){empty('lineups','Susunan pemain belum tersedia. Biasanya data ini muncul mendekati waktu pertandingan atau setelah pertandingan dimulai.');return}const cards=players.map(group=>{const team=group.team?.displayName||group.team?.name||'Tim';let list=group.roster||group.athletes||group.statistics||[];if(!Array.isArray(list))list=[];const names=list.map(x=>x.athlete||x.player||x).filter(x=>x&& (x.fullName||x.displayName||x.name));return '<article class="card"><h3>'+esc(team)+'</h3>'+(names.length?names.slice(0,25).map((x,i)=>'<div class="player"><span>'+esc(x.fullName||x.displayName||x.name)+'</span><small>'+esc(x.position?.abbreviation||x.position?.displayName||'Pemain')+'</small></div>').join(''):'<p class="muted">Daftar pemain belum tersedia.</p>')+'</article>'}).join('');$('lineups').innerHTML=cards||'<div class="empty">Susunan pemain belum tersedia.</div>'}
 
 function renderEspnEvents(data){
