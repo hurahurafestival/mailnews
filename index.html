@@ -62,13 +62,14 @@ async function loadFeed(feed){
   return (json.items||[]).map(x=>{
    let host='';try{host=new URL(x.link).hostname.replace(/^www\./,'')}catch{}
    const author=cleanHtml(x.author||'');
-   const source=author&&author.toLowerCase()!=='google news'?author:host==='news.google.com'?'Penerbit melalui Google News':host||'Penerbit berita';
-   return {title:cleanHtml(x.title),description:cleanHtml(x.description).slice(0,320),url:x.link,date:x.pubDate,image:imageFrom(x),category:feed.category,source};
+   const rawTitle=cleanHtml(x.title),titleSource=rawTitle.match(/\\s[-–|]\\s([^–—-]{2,60})$/);
+   const source=author&&author.toLowerCase()!=='google news'?author:titleSource?titleSource[1]:host==='news.google.com'?'Penerbit melalui Google News':host||'Penerbit berita';
+   return {title:rawTitle,description:cleanHtml(x.description).slice(0,220),url:x.link,date:x.pubDate,image:imageFrom(x),category:feed.category,source};
   });
  }));
  return results.flatMap(x=>x.status==='fulfilled'?x.value:[]);
 }
-const NEWS_CACHE_KEY='mailnews-news-cache-v1',NEWS_CACHE_TTL=15*60*1000;
+const NEWS_CACHE_KEY='mailnews-news-cache-v2',NEWS_CACHE_TTL=15*60*1000;
 function titleTokens(value){
  const stop=new Set(['yang','dan','dari','untuk','dengan','the','and','for','with','saat','ini','itu','resmi','jadi','bola','football','sepak']);
  return String(value||'').toLowerCase().replace(/[^a-z0-9 ]/g,' ').split(/\s+/).filter(x=>x.length>2&&!stop.has(x));
@@ -91,7 +92,7 @@ function normalizeArticles(items){
   }else groups.push({...item,sources:[source],snippets:item.description?[item.description]:[]});
  });
  return groups.map(g=>{
-  g.sources=g.sources.slice(0,6);
+  g.sources=g.sources.slice(0,4);
   g.description=g.snippets.slice(0,3).join(' • ').slice(0,620);
   g.synthesis=g.sources.length>1
    ?'Beberapa penerbit mengangkat topik yang sama. Rangkuman ini menggabungkan cuplikan yang tersedia dari '+g.sources.length+' sumber, dengan tetap membedakan laporan dan atribusi masing-masing.'
