@@ -120,7 +120,7 @@ export default {
       cacheSeconds = 300;
     } else if (path === "/match") {
       const fixture = url.searchParams.get("fixture");
-      if (!/^\\d{1,12}$/.test(fixture || "")) {
+      if (!/^\d{1,12}$/.test(fixture || "")) {
         return json({ error: "Parameter fixture (ID pertandingan numerik) wajib." }, 400, origin);
       }
       params.set("fixture", fixture);
