@@ -61,6 +61,8 @@ export default {
       const date = url.searchParams.get("date");
       if (live === "all") {
         params.set("live", "all");
+        const league = url.searchParams.get("league");
+        if (league && /^\d{1,6}$/.test(league)) params.set("league", league);
         cacheSeconds = 15;
       } else if (id && /^\d{1,12}$/.test(id)) {
         params.set("id", id);
