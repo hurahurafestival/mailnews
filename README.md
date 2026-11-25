@@ -42,3 +42,10 @@ Buka https://hurahurafestival.github.io/mailnews/ atau jalankan `index.html` mel
 Direktori `backend/` berisi Cloudflare Worker proxy untuk API-Football. Proxy menyediakan endpoint livescore global, jadwal berdasarkan tanggal, detail pertandingan, pencarian liga, dan klasemen. API key harus disimpan sebagai Worker secret `APIFOOTBALL_KEY`, bukan di frontend atau repository publik.
 
 Panduan deploy, daftar endpoint, aturan cache, dan batasan cakupan tersedia di [backend/README.md](backend/README.md). Worker belum dipakai oleh frontend secara otomatis: URL Worker dan pemetaan ID liga API-Football perlu dikonfigurasi serta diuji terlebih dahulu. Sampai tahap itu, ESPN tetap sumber utama dan OpenLigaDB hanya cadangan Bundesliga.
+
+
+## Integrasi API-Football (aktif pada frontend)
+
+Worker Cloudflare `mailnews-footbal-api.hurahurafestival.workers.dev` menjadi sumber tambahan untuk skor live dan klasemen pada lima kompetisi yang sudah dipetakan: Premier League (39), La Liga (140), Serie A (135), Bundesliga (78), dan UEFA Champions League (2). Skor live API-Football ditampilkan bersama jadwal/hasil ESPN; klasemen API-Football dicoba lebih dahulu lalu ESPN menjadi fallback. Kompetisi lain tetap memakai ESPN dan fallback Bundesliga OpenLigaDB. Cakupan dan data aktual tetap mengikuti paket serta respons API-Football.
+
+Worker menerima filter `/fixtures?live=all&league=ID`; Secret `APIFOOTBALL_KEY` dikonfigurasi sebagai Cloudflare Worker secret. Jangan menyimpan key di frontend. Frontend dan Worker sudah diperiksa sintaksnya, tetapi respons data runtime dari API-Football belum dapat dikonfirmasi dari sesi pengembangan ini.
