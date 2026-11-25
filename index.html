@@ -428,7 +428,8 @@ async function loadStandings(league,force=false){
     if(!secondary.ok)throw Error('OpenLigaDB unavailable');
     const table=await secondary.json();
     if(!Array.isArray(table)||!table.length)throw Error('No secondary table');
-    const rows=table.map((x,i)=>({name:x.teamName||x.team?.teamName||'Klub',logo:x.teamIconUrl||x.team?.teamIconUrl||'',played:x.matches??x.matchCount??'—',won:x.won??'—',drawn:x.draw??x.drawn??'—',lost:x.lost??'—',gf:x.goals??x.goalsFor??'—',ga:x.opponentGoals??x.goalsAgainst??'—',gd:x.goalDiff??x.goalDifference??'—',points:x.points??'—',rank:x.rank??i+1}));
+    const rawRows=table.map((x,i)=>({name:x.teamName||x.team?.teamName||'Klub',logo:x.teamIconUrl||x.team?.teamIconUrl||'',played:x.matches??x.matchCount??'—',won:x.won??'—',drawn:x.draw??x.drawn??'—',lost:x.lost??'—',gf:x.goals??x.goalsFor??'—',ga:x.opponentGoals??x.goalsAgainst??'—',gd:x.goalDiff??x.goalDifference??'—',points:x.points??'—',rank:x.rank??i+1}));
+    const rows=decorateStandingRows(league,rawRows);
     standingCache[league]={time:Date.now(),rows};
     box.innerHTML=standingsTableMarkup(rows);
     $('#standingsStatus').textContent=label+' · OpenLigaDB (cadangan komunitas) · diperbarui '+new Date().toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'});
