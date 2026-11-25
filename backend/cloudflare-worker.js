@@ -93,7 +93,7 @@ export default {
       }
       params.set("league", league);
       params.set("season", season);
-      cacheSeconds = 3600;
+      cacheSeconds = 300;
     } else if (path === "/leagues") {
       const search = (url.searchParams.get("search") || "").trim();
       if (search.length < 3 || search.length > 60) {
