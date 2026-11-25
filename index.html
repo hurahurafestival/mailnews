@@ -319,14 +319,28 @@ async function loadMatches(league,silent=false){
  const box=$('#matchGrid');
  if(!silent){$('#matchStatus').textContent='Memuat '+(leagueNames[league]||league)+'…';box.innerHTML='<div class="skeleton"></div><div class="skeleton"></div>'}
  try{
+  const apiLeague={'eng.1':39,'esp.1':140,'ita.1':135,'ger.1':78,'uefa.champions':2}[league];
+  let apiLiveCards='',apiLiveCount=0;
+  if(apiLeague){
+   try{
+    const liveResponse=await fetch('https://mailnews-footbal-api.hurahurafestival.workers.dev/fixtures?live=all&league='+apiLeague,{cache:'no-store'});
+    if(liveResponse.ok){
+     const liveData=await liveResponse.json(),fixtures=liveData.response||[];
+     apiLiveCount=fixtures.length;
+     apiLiveCards=fixtures.map(f=>{
+      const home=f.teams?.home||{},away=f.teams?.away||{},goals=f.goals||{},status=f.fixture?.status||{};
+      return '<article class="news-card news-body"><div class="eyebrow">'+esc(leagueNames[league]||league)+' · API-Football</div><h3>'+esc(home.name||'TBD')+' <span style="color:var(--green)">'+esc(goals.home??0)+' – '+esc(goals.away??0)+'</span> '+esc(away.name||'TBD')+'</h3><p>'+esc(status.long||'Pertandingan berlangsung')+(status.elapsed!=null?' · menit '+esc(status.elapsed):'')+'</p><div class="news-meta"><span><strong style="color:#e45b5b">● LIVE</strong></span><span>Skor langsung</span></div></article>';
+     }).join('');
+    }
+   }catch(apiError){console.warn('API-Football live unavailable',apiError)}
+  }
   const url='https://site.api.espn.com/apis/site/v2/sports/soccer/'+encodeURIComponent(league)+'/scoreboard?limit=100';
   const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw Error('ESPN unavailable');
   const data=await r.json(),events=data.events||[];
   matchUpdatedAt=new Date();
-  const liveCount=events.filter(e=>e.competitions?.[0]?.status?.type?.state==='in').length;
-  $('#matchStatus').textContent=events.length+' pertandingan · '+liveCount+' live · ESPN · diperbarui '+matchUpdatedAt.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  if(!events.length){box.innerHTML='<div class="empty">Belum ada jadwal atau hasil yang tersedia dari ESPN.</div>';return}
-  box.innerHTML=events.map(e=>{
+  $('#matchStatus').textContent=(events.length+apiLiveCount)+' pertandingan · '+apiLiveCount+' live API-Football · jadwal/hasil ESPN · diperbarui '+matchUpdatedAt.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  if(!events.length&&!apiLiveCards){box.innerHTML='<div class="empty">Belum ada jadwal atau hasil yang tersedia dari sumber yang terhubung.</div>';return}
+  box.innerHTML=apiLiveCards+events.map(e=>{
    const c=e.competitions?.[0],ts=c?.competitors||[],h=ts.find(t=>t.homeAway==='home')||ts[0],a=ts.find(t=>t.homeAway==='away')||ts[1],st=c?.status?.type,done=st?.completed,live=st?.state==='in';
    const status=done?'Selesai':live?'LIVE':st?.shortDetail||'Terjadwal';
    return '<article class="news-card news-body"><div class="eyebrow">'+esc(leagueNames[league]||league)+' · ESPN</div><h3>'+esc(h?.team?.displayName||'TBD')+' <span style="color:var(--green)">'+(done||live?esc(h?.score??'0')+' – '+esc(a?.score??'0'):'vs')+'</span> '+esc(a?.team?.displayName||'TBD')+'</h3><p>'+esc(st?.shortDetail||new Date(e.date).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'}))+'</p><div class="news-meta"><span>'+(live?'<strong style="color:#e45b5b">● LIVE</strong>':esc(status))+'</span><a href="match.html?event='+encodeURIComponent(e.id)+'&league='+encodeURIComponent(league)+'">DETAIL ↗</a></div></article>'
