@@ -239,7 +239,7 @@ const apiLeagueSearch={
 const apiLeagueLookupCache={};
 async function resolveApiLeague(league){
  const cfg=apiLeagueSearch[league];
- if(!cfg)return null;
+ if(!cfg){const known={'eng.1':39,'esp.1':140,'ita.1':135,'ger.1':78,'uefa.champions':2}[league];return known?{id:known,standingsSeason:null,fixturesSeason:null}:null;}
  if(apiLeagueLookupCache[league]&&Date.now()-apiLeagueLookupCache[league].time<60*60*1000)return apiLeagueLookupCache[league].value;
  const response=await fetch('https://mailnews-footbal-api.hurahurafestival.workers.dev/leagues?search='+encodeURIComponent(cfg.search)+'&refresh=1',{cache:'no-store'});
  if(!response.ok)throw Error('Pencarian kompetisi API-Football HTTP '+response.status);
