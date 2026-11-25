@@ -95,6 +95,13 @@ export default {
       params.set("league", league);
       params.set("season", season);
       cacheSeconds = 300;
+    } else if (path === "/match") {
+      const fixture = url.searchParams.get("fixture");
+      if (!/^\\d{1,12}$/.test(fixture || "")) {
+        return json({ error: "Parameter fixture (ID pertandingan numerik) wajib." }, 400, origin);
+      }
+      params.set("fixture", fixture);
+      cacheSeconds = 20;
     } else if (path === "/leagues") {
       const search = (url.searchParams.get("search") || "").trim();
       if (search.length < 3 || search.length > 60) {
@@ -104,6 +111,59 @@ export default {
       cacheSeconds = 3600;
     } else {
       return json({ error: "Endpoint tidak ditemukan." }, 404, origin);
+    }
+
+    if (path === "/match") {
+      const fixture = params.get("fixture");
+      const target = API_BASE + "/fixtures?id=" + fixture;
+      const cacheKey = new Request(target, { method: "GET" });
+      const cache = caches.default;
+      const cached = bypassCache ? null : await cache.match(cacheKey);
+      if (cached) {
+        const headers = new Headers(cached.headers);
+        Object.entries(corsHeaders(origin)).forEach(([k, v]) => headers.set(k, v));
+        headers.set("X-Mailnews-Cache", "HIT");
+        return new Response(cached.body, { status: cached.status, headers });
+      }
+      try {
+        const endpoints = [
+          ["fixture", "/fixtures?id=" + fixture],
+          ["events", "/fixtures/events?fixture=" + fixture],
+          ["statistics", "/fixtures/statistics?fixture=" + fixture],
+          ["lineups", "/fixtures/lineups?fixture=" + fixture]
+        ];
+        const results = await Promise.all(endpoints.map(async ([name, endpoint]) => {
+          try {
+            const upstream = await fetch(API_BASE + endpoint, {
+              headers: { "x-apisports-key": env.APIFOOTBALL_KEY },
+              cf: bypassCache ? { cacheTtl: 0, cacheEverything: false } : { cacheTtl: cacheSeconds, cacheEverything: true }
+            });
+            const raw = await upstream.text();
+            let data;
+            try { data = JSON.parse(raw); } catch { data = { error: "Respons bukan JSON." }; }
+            if (!upstream.ok || (data.errors && Object.keys(data.errors).length)) {
+              return [name, { available: false, status: upstream.status, error: data.errors || data.error || data }];
+            }
+            return [name, { available: true, response: data.response || [] }];
+          } catch (error) {
+            return [name, { available: false, error: String(error) }];
+          }
+        }));
+        const payload = Object.fromEntries(results);
+        const response = new Response(JSON.stringify(payload), {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json; charset=utf-8",
+            "Cache-Control": "public, max-age=0, s-maxage=" + cacheSeconds,
+            "X-Mailnews-Provider": "API-Football",
+            ...corsHeaders(origin)
+          }
+        });
+        if (!bypassCache) ctx.waitUntil(cache.put(cacheKey, response.clone()));
+        return response;
+      } catch (error) {
+        return json({ error: "Tidak dapat mengambil detail pertandingan.", details: String(error) }, 502, origin);
+      }
     }
 
     const target = API_BASE + path + "?" + params.toString();
