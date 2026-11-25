@@ -67,3 +67,10 @@ Worker menerima filter `/fixtures?live=all&league=ID`; Secret `APIFOOTBALL_KEY` 
 - Frontend menampilkan jadwal rentang tujuh hari dari API-Football untuk lima liga yang dipetakan; ESPN juga diminta menampilkan rentang tujuh hari sebagai sumber cadangan.
 - Cache klasemen pada Worker dipersingkat menjadi 5 menit. Penyegaran otomatis frontend tetap berjalan ketika panel klasemen terbuka.
 - Kode frontend dan Worker lulus pemeriksaan sintaks. Akses pengujian eksternal dari sesi ini dibatasi, sehingga respons live provider dan tampilan aktual di browser belum dapat diverifikasi.
+
+### AFC Indonesia dan zona klasemen
+
+- Worker menyediakan proxy halaman resmi AFC Indonesia untuk klasemen dan bagian jadwal mendatang. Mailnews membaca bagian **Upcoming Matches** jika AFC memublikasikan fixture mendatang; bila bagian tersebut kosong, jadwal beralih ke sumber cadangan ESPN dan statusnya menyebutkan alasan tersebut.
+- Klasemen Indonesia menandai posisi 1 sebagai kualifikasi AFC, posisi 2 sebagai AFC Challenge League, dan posisi 16–18 sebagai zona degradasi sesuai regulasi BRI Super League 2026/27 (Article 7.8 untuk degradasi) serta penanda kualifikasi yang ditampilkan penyedia klasemen.
+- BRI Super League adalah kasta tertinggi sehingga tidak memiliki zona promosi domestik. Posisi 16–18 terdegradasi ke Championship musim berikutnya.
+- Kolom **Gerak** memakai snapshot klasemen sebelumnya yang disimpan lokal di browser pengunjung. ▲ berarti naik posisi, ▼ turun posisi; kunjungan pertama akan menampilkan tanda — karena belum ada snapshot pembanding.
