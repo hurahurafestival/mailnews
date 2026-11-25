@@ -362,7 +362,7 @@ async function loadMatches(league,silent=false){
       return '<article class="news-card news-body"><div class="eyebrow">'+esc(leagueNames[league]||league)+' · API-Football</div><h3>'+esc(home.name||'TBD')+' <span style="color:var(--green)">'+score+'</span> '+esc(away.name||'TBD')+'</h3><p>'+esc(time)+' · '+esc(status.long||'Terjadwal')+'</p><div class="news-meta"><span>'+(live?'<strong style="color:#e45b5b">● LIVE</strong>':done?'Selesai':'Jadwal')+'</span><span>API-Football</span></div></article>';
      }).join('');
     }else{apiProviderError='Jadwal API-Football HTTP '+scheduleResponse.status}
-    const liveResponse=await fetch('https://mailnews-footbal-api.hurahurafestival.workers.dev/fixtures?live=all&league='+apiLeague,{cache:'no-store'});
+    const liveResponse=await fetch('https://mailnews-footbal-api.hurahurafestival.workers.dev/fixtures?live=all&league='+apiLeague+'&refresh=1',{cache:'no-store'});
     if(liveResponse.ok){
      const liveData=await liveResponse.json(),fixtures=liveData.response||[];
      apiLiveCount=fixtures.length;
@@ -405,8 +405,9 @@ async function loadMatches(league,silent=false){
     return;
    }catch(backupError){}
   }
-  $('#matchStatus').textContent='Sumber skor tidak tersedia';
-  if(!silent)box.innerHTML='<div class="empty">Data dari sumber yang tersedia belum dapat diakses. Kami tidak menampilkan skor perkiraan. Coba perbarui lagi nanti.</div>';
+  const matchError=String(e?.message||e||'Kesalahan tidak diketahui');
+  $('#matchStatus').textContent='Sumber skor tidak tersedia · '+matchError+(apiProviderError?' · API-Football: '+apiProviderError:'');
+  if(!silent)box.innerHTML='<div class="empty">Data pertandingan belum dapat diakses. '+esc(matchError)+(apiProviderError?' · API-Football: '+esc(apiProviderError):'')+'. Kami tidak menampilkan skor perkiraan. Coba perbarui lagi nanti.</div>';
  }finally{
   matchPollBusy=false;
   if(matchPendingLeague){const next=matchPendingLeague;matchPendingLeague=null;if(next===currentLeague)loadMatches(next,true)}
