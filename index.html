@@ -242,6 +242,24 @@ async function loadStandings(league,force=false){
   return;
  }
  try{
+  const apiLeague={'eng.1':39,'esp.1':140,'ita.1':135,'ger.1':78,'uefa.champions':2}[league];
+  if(apiLeague){
+   try{
+    const season=new Date().getFullYear();
+    const apiResponse=await fetch('https://mailnews-footbal-api.hurahurafestival.workers.dev/standings?league='+apiLeague+'&season='+season,{cache:'no-store'});
+    if(apiResponse.ok){
+     const apiData=await apiResponse.json();
+     const apiRows=apiData.response?.[0]?.league?.standings?.flat()||[];
+     if(apiRows.length){
+      const rows=apiRows.map(x=>({name:x.team?.name||'Klub',logo:x.team?.logo||'',played:x.all?.played??'—',won:x.all?.win??'—',drawn:x.all?.draw??'—',lost:x.all?.lose??'—',gf:x.all?.goals?.for??'—',ga:x.all?.goals?.against??'—',gd:x.goalsDiff??'—',points:x.points??'—',rank:x.rank??'—'}));
+      standingCache[league]={time:Date.now(),rows};
+      box.innerHTML=standingsTableMarkup(rows);
+      $('#standingsStatus').textContent=label+' · musim '+season+' · '+rows.length+' klub · API-Football · diperbarui '+new Date().toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'});
+      return;
+     }
+    }
+   }catch(apiError){console.warn('API-Football standings unavailable',apiError)}
+  }
   const r=await fetch('https://site.api.espn.com/apis/v2/sports/soccer/'+encodeURIComponent(league)+'/standings',{cache:'no-store'});
   if(!r.ok)throw Error('Klasemen tidak tersedia');
   const data=await r.json(),entries=collectStandingEntries(data);
