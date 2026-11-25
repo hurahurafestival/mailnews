@@ -4,5 +4,6 @@ const files={"Persib Bandung":["indonesia","Persib_Bandung.svg"],"Persija Jakart
 const base='https://raw.githubusercontent.com/JoseArroyave/football-logos/refs/heads/main/logos/';
 const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim();
 const idx={};Object.keys(files).forEach(k=>idx[norm(k)]=files[k]);
-window.mailnewsClubLogo=function(name,fallback){const e=files[name]||idx[norm(name)];const src=e?base+e[0]+'/'+e[1]:(fallback||'');if(!src)return '';const safe=s=>String(s).replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));return '<img class=\"club-logo\" src=\"'+safe(src)+'\" alt=\"\" loading=\"lazy\" onerror=\"this.style.display=\\'none\\'\">'};
+window.mailnewsClubLogo=function(name,fallback){const e=files[name]||idx[norm(name)];const src=e?base+e[0]+'/'+e[1]:(fallback||'');if(!src)return '';const safe=s=>String(s).replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));return '<img class=\"club-logo\" src=\"'+safe(src)+'\" alt=\"\" loading=\"lazy\" style=\"width:24px;height:24px;object-fit:contain;vertical-align:middle;margin-right:7px\" onerror=\"this.remove()\">'};
+const style=document.createElement('style');style.textContent='.crest .club-logo{width:44px;height:44px;margin:0}.club-logo{flex:0 0 auto}';document.head.appendChild(style);
 })();
