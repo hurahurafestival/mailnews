@@ -77,7 +77,8 @@ function titleTokens(value){
 function titleSimilarity(a,b){
  const aa=new Set(titleTokens(a)),bb=new Set(titleTokens(b));if(!aa.size||!bb.size)return 0;
  let hit=0;aa.forEach(x=>{if(bb.has(x))hit++});
- return hit/Math.min(aa.size,bb.size);
+ const union=aa.size+bb.size-hit;
+ return hit>=2?hit/union:0;
 }
 function normalizeArticles(items){
  const groups=[];
