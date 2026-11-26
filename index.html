@@ -84,7 +84,7 @@ async function loadFeed(feed){
  }));
  return results.flatMap(x=>x.status==='fulfilled'?x.value:[]);
 }
-const NEWS_CACHE_KEY='mailnews-news-cache-v2',NEWS_CACHE_TTL=15*60*1000;
+const NEWS_CACHE_KEY='mailnews-news-cache-v3',NEWS_CACHE_TTL=15*60*1000;
 function titleTokens(value){
  const stop=new Set(['yang','dan','dari','untuk','dengan','the','and','for','with','saat','ini','itu','resmi','jadi','bola','football','sepak']);
  return String(value||'').toLowerCase().replace(/[^a-z0-9 ]/g,' ').split(/\s+/).filter(x=>x.length>2&&!stop.has(x));
@@ -116,14 +116,15 @@ function normalizeArticles(items){
  }).sort((a,b)=>new Date(b.date)-new Date(a.date));
 }
 function buildStoryParagraphs(g){
- const reports=(g.sources||[]).map(s=>({name:s.name||'Penerbit berita',text:String(s.description||'').replace(/\s+/g,' ').trim()})).filter(s=>s.text);
- const clean=s=>String(s||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();
+ const reports=(g.sources||[]).map(s=>({name:s.name||'Penerbit berita',text:String(s.description||'').replace(/\\s+/g,' ').trim()})).filter(s=>s.text);
+ const clean=s=>String(s||'').replace(/<[^>]*>/g,' ').replace(/\\s+/g,' ').trim();
  const paragraphs=[],lead=clean(reports[0]?.text||g.description||'');
  paragraphs.push(lead?clean(g.title)+'. '+lead:clean(g.title)+'. Feed belum menyediakan cuplikan isi yang cukup untuk menjelaskan detail berita.');
- if(reports[0]?.text)paragraphs.push('Menurut cuplikan yang dimuat oleh '+reports[0].name+', '+clean(reports[0].text));
- if(reports[1]?.text)paragraphs.push('Laporan pembanding dari '+reports[1].name+' menyertakan informasi berikut: '+clean(reports[1].text));
- else paragraphs.push('Belum ada cuplikan penerbit kedua yang cukup cocok untuk memeriksa detail berita ini. Mailnews tidak menyimpulkan informasi tambahan di luar laporan yang tersedia.');
- if(reports[2]?.text)paragraphs.push('Sumber lain, '+reports[2].name+', juga memuat perkembangan terkait: '+clean(reports[2].text));
+ if(reports[1]?.text)paragraphs.push('Laporan pembanding dari '+reports[1].name+' menyebutkan: '+clean(reports[1].text));
+ else paragraphs.push('Feed yang tersedia saat ini hanya memuat satu cuplikan penerbit yang cocok. Tidak ada laporan kedua yang cukup untuk mengonfirmasi detail tambahan.');
+ if(reports[2]?.text)paragraphs.push('Cuplikan dari '+reports[2].name+' menambahkan sudut laporan lain: '+clean(reports[2].text));
+ else paragraphs.push('Tidak ada cuplikan tambahan yang cukup kuat untuk menyatakan perkembangan lain. Mailnews tidak mengisi kekosongan informasi dengan skor, kutipan, atau fakta rekaan.');
+ if(reports.length>1)paragraphs.push('Cuplikan dari beberapa penerbit membantu memberi pembanding, tetapi kesamaan topik tidak otomatis berarti semua detail telah terverifikasi. Perbedaan laporan perlu dibaca melalui tautan sumber masing-masing.');
  paragraphs.push('Ringkasan disusun otomatis dari judul dan cuplikan RSS yang berhasil diakses pada '+(g.date?new Date(g.date).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'}):'waktu yang tidak tersedia')+'. Untuk detail lengkap dan pembaruan, pembaca dapat membuka tautan penerbit pada bagian sumber.');
  return paragraphs.slice(0,5);
 }
