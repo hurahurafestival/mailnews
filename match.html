@@ -35,17 +35,13 @@ function getStats(data,competition){
    for(const st of stats){
     const label=st.label||st.name||st.abbreviation||st.type;
     if(!label)continue;
-    if(!rows.has(label))rows.set(label,{label,home:'—',away:'—',values:[]});
+    if(!rows.has(label))rows.set(label,{label,home:'—',away:'—'});
     const row=rows.get(label),value=st.displayValue??st.value??st.display??'—';
-    if(side==='home')row.home=value;else if(side==='away')row.away=value;else row.values.push(value);
+    if(side==='home')row.home=value;else if(side==='away')row.away=value;
    }
   }
  }
- for(const row of rows.values()){
-  if(row.home==='—'&&row.values.length)row.home=row.values[0];
-  if(row.away==='—'&&row.values.length>1)row.away=row.values[1];
- }
- return [...rows.values()];
+ return [...rows.values()].filter(row=>row.home!=='—'||row.away!=='—');
 }
 function renderStats(data,competition){
  const rows=getStats(data,competition);
@@ -118,13 +114,26 @@ function renderEspnPlayerStats(data){
 }
 
 function apiValue(v){if(v===null||v===undefined||v==='')return '—';if(typeof v==='object')return v.total??v.value??'—';return v}
+function statNumber(value){
+ const match=String(value??'').replace(',','.').match(/-?\\d+(?:\\.\\d+)?/);
+ return match?Number(match[0]):null;
+}
 function renderApiStats(groups){
  if(!Array.isArray(groups)||!groups.length){empty('stats','Statistik belum tersedia untuk pertandingan ini atau tidak termasuk cakupan kompetisi.');return}
- const home=groups[0]?.team?.name||'Kandang',away=groups[1]?.team?.name||'Tandang';
- const map=new Map();
- for(const group of groups)for(const item of group.statistics||[]){if(!map.has(item.type))map.set(item.type,[]);map.get(item.type).push(apiValue(item.value))}
- const rows=[...map.entries()];
- $('stats').innerHTML=rows.length?rows.map(([label,values])=>'<div class="stat"><span>'+esc(values[0]??'—')+'</span><div><strong>'+esc(label)+'</strong><div class="barline"><i style="width:50%"></i></div></div><span>'+esc(values[1]??'—')+'</span></div>').join(''):'<div class="empty">Statistik belum tersedia.</div>';
+ const homeGroup=groups.find(g=>g.team?.homeAway==='home')||groups[0];
+ const awayGroup=groups.find(g=>g.team?.homeAway==='away')||groups.find(g=>g!==homeGroup);
+ const homeStats=new Map((homeGroup?.statistics||[]).map(x=>[String(x.type||x.name||''),apiValue(x.value)]));
+ const awayStats=new Map((awayGroup?.statistics||[]).map(x=>[String(x.type||x.name||''),apiValue(x.value)]));
+ const preferred=['Ball Possession','Total Shots','Shots on Goal','Shots off Goal','Blocked Shots','Shots insidebox','Shots outsidebox','Corner Kicks','Offsides','Fouls','Yellow Cards','Red Cards','Goalkeeper Saves','Total passes','Passes accurate','Passes %'];
+ const keys=[...new Set([...homeStats.keys(),...awayStats.keys()])];
+ keys.sort((a,b)=>{const ai=preferred.findIndex(x=>x.toLowerCase()===a.toLowerCase()),bi=preferred.findIndex(x=>x.toLowerCase()===b.toLowerCase());return (ai<0?999:ai)-(bi<0?999:bi)});
+ if(!keys.length){empty('stats','Penyedia belum mengirim statistik untuk pertandingan ini.');return}
+ $('stats').innerHTML=keys.slice(0,24).map(label=>{
+  const h=homeStats.has(label)?homeStats.get(label):'—',a=awayStats.has(label)?awayStats.get(label):'—';
+  const hn=statNumber(h),an=statNumber(a),valid=hn!==null&&an!==null&&hn>=0&&an>=0&&(hn+an)>0;
+  const width=valid?Math.max(2,Math.min(98,hn/(hn+an)*100)):50;
+  return '<div class="stat"><span>'+esc(h)+'</span><div><strong>'+esc(label)+'</strong><div class="barline"><i style="width:'+width+'%;'+(!valid?'opacity:.25':'')+'"></i></div></div><span>'+esc(a)+'</span></div>';
+ }).join('');
 }
 function renderApiLineups(groups){
  if(!Array.isArray(groups)||!groups.length){empty('lineups','Susunan pemain dan formasi belum tersedia dari penyedia data.');return}
@@ -135,13 +144,10 @@ function renderApiLineups(groups){
    const p=x.player||x,grid=String(p.grid||'').split(':').map(Number);
    return {...p,_row:Number.isFinite(grid[0])&&grid[0]>0?grid[0]:null,_col:Number.isFinite(grid[1])&&grid[1]>0?grid[1]:null,_index:i};
   });
-  const maxRow=Math.max(1,...parsed.map(p=>p._row||0)),maxCol=Math.max(1,...parsed.map(p=>p._col||0));
-  const positioned=parsed.map((p,i)=>{
-   let row=p._row,col=p._col;
-   if(!row){row=Math.min(4,Math.floor(i/4)+1);col=(i%4)+1}
-   return {...p,x:(col-.5)/Math.max(maxCol,4)*100,y:(row-.5)/Math.max(maxRow,4)*100};
-  });
-  const pitch=positioned.length?'<div class="pitch-field"><div class="pitch-box top"></div><div class="pitch-box bottom"></div>'+positioned.map(p=>'<div class="pitch-player" style="left:'+p.x+'%;top:'+p.y+'%"><i>'+esc(p.number??'•')+'</i><span>'+esc((p.name||'Pemain').split(' ').slice(-1)[0])+'</span></div>').join('')+'</div>':'<div class="empty">Pemain inti belum dirilis.</div>';
+  const validGrid=parsed.filter(p=>p._row!==null&&p._col!==null);
+  const maxRow=Math.max(1,...validGrid.map(p=>p._row)),maxCol=Math.max(1,...validGrid.map(p=>p._col));
+  const positioned=validGrid.map(p=>({...p,x:(p._col-.5)/Math.max(maxCol,4)*100,y:(p._row-.5)/Math.max(maxRow,4)*100}));
+  const pitch=positioned.length?'<div class="pitch-field"><div class="pitch-box top"></div><div class="pitch-box bottom"></div>'+positioned.map(p=>'<div class="pitch-player" style="left:'+p.x+'%;top:'+p.y+'%"><i>'+esc(p.number??'•')+'</i><span>'+esc((p.name||'Pemain').split(' ').slice(-1)[0])+'</span></div>').join('')+'</div>':(parsed.length?'<div class="empty">Koordinat posisi pemain belum dikirim penyedia. Formasi: '+esc(formation)+'.</div>':'<div class="empty">Pemain inti belum dirilis.</div>')+(parsed.length?'<div class="bench-list"><h4>PEMAIN INTI</h4>'+parsed.map(p=>'<div class="player"><span>'+esc(p.number??'')+' '+esc(p.name||'Pemain')+'</span><small>'+esc(p.pos||'')+'</small></div>').join('')+'</div>':'');
   const subs=bench.length?'<div class="bench-list"><h4>CADANGAN</h4>'+bench.map(x=>{const p=x.player||x;return '<div class="player"><span>'+esc(p.number??'')+' '+esc(p.name||'Pemain')+'</span><small>'+esc(p.pos||'')+'</small></div>'}).join('')+'</div>':'';
   return '<article class="lineup-card"><div class="lineup-head"><h3>'+esc(team)+'</h3><small>'+esc(formation)+'</small></div>'+pitch+subs+'</article>';
  });
@@ -165,7 +171,7 @@ function renderApiEvents(events){
  $('events').innerHTML=events.map(e=>'<div class="player"><span><strong>'+esc((e.time?.elapsed??'')+(e.time?.extra?'+ '+e.time.extra:'')+"'")+'</strong> <span class="event-mark">'+icon(e)+'</span><strong>'+esc(e.type||'Kejadian')+'</strong> — '+esc(e.detail||'')+'<br><small>'+esc(e.player?.name||'')+(e.assist?.name?' · Assist: '+esc(e.assist.name):'')+'</small></span><small>'+esc(e.team?.name||'')+'</small></div>').join('');
 }
 async function loadApiMatch(){
- const response=await fetch('https://mailnews-footbal-api.hurahurafestival.workers.dev/fixtures?id='+encodeURIComponent(fixtureId),{cache:'no-store'});
+ const response=await fetch('https://mailnews-footbal-api.hurahurafestibal.workers.dev/fixtures?id='+encodeURIComponent(fixtureId),{cache:'no-store'});
  const data=await response.json();
  if(!response.ok)throw Error(data.error||'API-Football HTTP '+response.status);
  const fixture=data.response?.[0];
