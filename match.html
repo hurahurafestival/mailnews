@@ -115,13 +115,15 @@ function renderEspnPlayerStats(data){
 
 function apiValue(v){if(v===null||v===undefined||v==='')return '—';if(typeof v==='object')return v.total??v.value??'—';return v}
 function statNumber(value){
- const match=String(value??'').replace(',','.').match(/-?\\d+(?:\\.\\d+)?/);
+ const match=String(value??'').replace(',','.').match(/-?\d+(?:\.\d+)?/);
  return match?Number(match[0]):null;
 }
-function renderApiStats(groups){
+function renderApiStats(groups,teams){
  if(!Array.isArray(groups)||!groups.length){empty('stats','Statistik belum tersedia untuk pertandingan ini atau tidak termasuk cakupan kompetisi.');return}
- const homeGroup=groups.find(g=>g.team?.homeAway==='home')||groups[0];
- const awayGroup=groups.find(g=>g.team?.homeAway==='away')||groups.find(g=>g!==homeGroup);
+ const homeId=teams?.home?.id,awayId=teams?.away?.id;
+ const byId=id=>groups.find(g=>id!=null&&String(g.team?.id)===String(id));
+ const homeGroup=byId(homeId)||groups.find(g=>g.team?.homeAway==='home')||(groups.length===2?groups[0]:null);
+ const awayGroup=byId(awayId)||groups.find(g=>g.team?.homeAway==='away')||(groups.length===2?groups.find(g=>g!==homeGroup):null);
  const homeStats=new Map((homeGroup?.statistics||[]).map(x=>[String(x.type||x.name||''),apiValue(x.value)]));
  const awayStats=new Map((awayGroup?.statistics||[]).map(x=>[String(x.type||x.name||''),apiValue(x.value)]));
  const preferred=['Ball Possession','Total Shots','Shots on Goal','Shots off Goal','Blocked Shots','Shots insidebox','Shots outsidebox','Corner Kicks','Offsides','Fouls','Yellow Cards','Red Cards','Goalkeeper Saves','Total passes','Passes accurate','Passes %'];
@@ -183,7 +185,7 @@ async function loadApiMatch(){
  $('status').textContent=(status.long||'Status tidak tersedia')+(status.elapsed!=null?' · menit '+status.elapsed:'')+' · API-Football · diperbarui '+new Date().toLocaleTimeString('id-ID');
  const venue=fixture.fixture?.venue?.name||'Stadion belum tersedia',date=fixture.fixture?.date;
  $('info').textContent=(date?new Date(date).toLocaleString('id-ID',{dateStyle:'full',timeStyle:'short'}):'Waktu belum tersedia')+' · '+venue+' · Wasit: '+(fixture.fixture?.referee||'Belum tersedia');
- renderApiStats(fixture.statistics||[]);
+ renderApiStats(fixture.statistics||[],fixture.teams||{});
  renderApiLineups(fixture.lineups||[]);
  renderApiPlayers(fixture.players||[]);
  renderApiEvents(fixture.events||[]);
