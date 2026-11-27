@@ -69,7 +69,7 @@ async function enrichMissingImages(items){
      const response=await fetch(endpoint,{signal:AbortSignal.timeout(8000),cache:'force-cache'});
      if(!response.ok)continue;
      const data=await response.json();
-     if(data.image&&/^https:\\/\\//i.test(data.image)){article.image=data.image;changed=true;break;}
+     if(data.image&&data.image.startsWith("https://")){article.image=data.image;changed=true;break;}
     }catch{}
    }
    cache[article.url]={image:article.image||'',checkedAt:now};
