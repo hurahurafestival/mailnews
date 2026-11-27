@@ -58,7 +58,9 @@ const NEWS_IMAGE_API='https://mailnews-footbal-api.hurahurafestibal.workers.dev/
 const NEWS_IMAGE_CACHE_KEY='mailnews-news-image-cache-v1';
 async function enrichMissingImages(items){
  let cache={};try{cache=JSON.parse(localStorage.getItem(NEWS_IMAGE_CACHE_KEY)||'{}')||{}}catch{}
- const now=Date.now(),targets=items.filter(a=>!a.image&&a.url&&!cache[a.url]).slice(0,12);
+ const now=Date.now();
+ items.forEach(a=>{const saved=cache[a.url];if(!a.image&&saved?.image&&saved.checkedAt&&now-saved.checkedAt<7*86400000){a.image=saved.image;changed=true;}});
+ const targets=items.filter(a=>!a.image&&a.url&&!cache[a.url]).slice(0,12);
  let changed=false;
  for(let i=0;i<targets.length;i+=3){
   await Promise.all(targets.slice(i,i+3).map(async article=>{
