@@ -147,26 +147,29 @@ function normalizeArticles(items){
  }).sort((a,b)=>new Date(b.date)-new Date(a.date));
 }
 function buildStoryParagraphs(g){
- const clean=s=>String(s||'').replace(/<[^>]*>/g,' ').replace(/&nbsp;/gi,' ').replace(/&amp;/gi,'&').replace(/\s+/g,' ').trim();
- const splitSentences=s=>clean(s).split(/(?<=[.!?])\s+(?=[A-Z0-9“"‘])/).map(x=>x.trim()).filter(x=>x.length>35);
- const reports=(g.sources||[]).map(s=>({name:s.name||'Penerbit berita',sentences:splitSentences(s.description||'')})).filter(s=>s.sentences.length);
+ const clean=value=>String(value||'').replace(/<[^>]*>/g,' ').replace(/&nbsp;/gi,' ').replace(/&amp;/gi,'&').replace(/\s+/g,' ').trim();
+ const split=value=>clean(value).split(/(?<=[.!?])\s+(?=[A-Z0-9“"‘])/).map(x=>x.trim()).filter(x=>x.length>35);
+ const reports=(g.sources||[]).map(x=>({name:x.name||'Penerbit berita',sentences:split(x.description||'')})).filter(x=>x.sentences.length);
  const used=new Set(),paragraphs=[];
- const unique=(items)=>items.filter(sentence=>{const key=sentence.toLowerCase().replace(/[^a-z0-9\u00c0-\u024f]/g,'').slice(0,180);if(!key||used.has(key))return false;used.add(key);return true});
- const lead=reports[0];
- if(lead){
-  const chosen=unique(lead.sentences).slice(0,2);
-  paragraphs.push(clean(g.title)+'. '+chosen.join(' '));
- }else if(clean(g.description)){
-  paragraphs.push(clean(g.title)+'. '+clean(g.description));
+ const unique=items=>items.filter(sentence=>{const key=sentence.toLowerCase().replace(/[^a-z0-9\u00c0-\u024f]/g,'').slice(0,180);if(!key||used.has(key))return false;used.add(key);return true});
+ if(!reports.length){
+  const fallback=clean(g.description);
+  if(fallback)paragraphs.push(clean(g.title)+'. '+fallback);
+  else paragraphs.push(clean(g.title)+'. Feed penerbit belum menyediakan cuplikan isi yang dapat dirangkum.');
  }else{
-  paragraphs.push(clean(g.title)+'. Feed penerbit belum menyediakan cuplikan isi yang dapat dirangkum.');
- }
- for(const report of reports.slice(1,4)){
-  const chosen=unique(report.sentences).slice(0,2);
-  if(chosen.length)paragraphs.push('Menurut cuplikan '+report.name+', '+chosen.join(' '));
+  reports.slice(0,4).forEach((report,index)=>{
+   const sentences=unique(report.sentences);
+   for(let i=0;i<sentences.length&&paragraphs.length<4;i+=2){
+    const chunk=sentences.slice(i,i+2);
+    if(!chunk.length)continue;
+    if(index===0&&i===0)paragraphs.push(clean(g.title)+'. '+chunk.join(' '));
+    else if(index===0)paragraphs.push('Rincian lain dalam cuplikan '+report.name+': '+chunk.join(' '));
+    else paragraphs.push('Laporan '+report.name+' menambahkan: '+chunk.join(' '));
+   }
+  });
  }
  const timestamp=g.date?new Date(g.date).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'}):'waktu terbit tidak tersedia';
- paragraphs.push('Catatan: rangkuman ini disusun dari cuplikan RSS yang tersedia hingga '+timestamp+'. Mailnews tidak mengakses atau menyalin keseluruhan artikel; periksa tautan sumber untuk konteks lengkap dan pembaruan.');
+ paragraphs.push('Catatan redaksi: rangkuman disusun dari cuplikan RSS yang tersedia hingga '+timestamp+'. Jumlah dan isi laporan pembanding tercantum di bawah. Mailnews tidak mengakses keseluruhan artikel dan tidak menambahkan fakta yang tidak tercantum pada sumber.');
  return paragraphs.slice(0,5);
 }
 function readNewsCache(){try{const saved=JSON.parse(localStorage.getItem(NEWS_CACHE_KEY)||'null');return saved&&Array.isArray(saved.items)?saved:null}catch{return null}}
