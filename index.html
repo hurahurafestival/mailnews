@@ -95,7 +95,9 @@ async function loadFeed(feed){
    });
   }finally{clearTimeout(timer)}
  }));
- return results.flatMap(x=>x.status==='fulfilled'?x.value:[]);
+ const items=results.flatMap(x=>x.status==='fulfilled'?x.value:[]);
+ if(!items.length)throw Error('Tidak ada artikel dari feed '+feed.category);
+ return items;
 }
 const NEWS_CACHE_KEY='mailnews-news-cache-v7',NEWS_CACHE_TTL=10*60*1000;
 function titleTokens(value){
@@ -194,7 +196,7 @@ function detailUrl(a){const p=new URLSearchParams({title:a.title,description:a.d
 function editorialScore(a){
  const ageHours=Math.max(0,(Date.now()-new Date(a.date).getTime())/3600000);
  const freshness=Number.isFinite(ageHours)?28*Math.exp(-ageHours/42):0;
- const categoryWeight={'Indonesia':8,'Liga Champions':7,'Premier League':6,'La Liga':5,'Serie A':5,'Bundesliga':5,'Transfer':4}[a.category]||0;
+ const categoryWeight={'Indonesia':8,'Timnas Indonesia':9,'Sepak Bola Dunia':6,'Liga Champions':7,'Premier League':6,'La Liga':5,'Serie A':5,'Bundesliga':5,'Transfer':4}[a.category]||0;
  const summaryQuality=a.description?Math.min(a.description.length/230,1)*5:0;
  const imageBonus=a.image?2:0;
  return freshness+categoryWeight+summaryQuality+imageBonus;
