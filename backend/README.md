@@ -29,6 +29,13 @@ Backend proxy Cloudflare Worker untuk menghubungkan website statis mailnews deng
 
 Jangan pernah menulis API key ke `index.html`, repository publik, URL, atau pesan chat.
 
+## Pengayaan foto berita
+
+- `GET /news-image?url=<URL artikel>` mengambil metadata `og:image`/`twitter:image` langsung dari halaman penerbit yang diizinkan.
+- Host dibatasi ke domain penerbit berita yang digunakan Mailnews; redirect diperiksa satu per satu dan hanya HTTPS yang diterima.
+- Respons gambar disimpan di cache edge hingga 24 jam; frontend membatasi pengayaan maksimal 12 artikel per pemuatan berita, tiga permintaan bersamaan, dan menyimpan hasil di browser selama maksimal 7 hari.
+- Jika penerbit tidak menyediakan metadata foto atau halaman tidak dapat diakses, Mailnews tetap menampilkan latar netral tanpa foto stok.
+
 ## Endpoint proxy
 
 | Endpoint | Fungsi | Cache |
