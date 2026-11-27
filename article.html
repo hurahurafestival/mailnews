@@ -14,7 +14,7 @@
 <body><main class="wrap">
 <header class="bar"><a class="brand" href="index.html">⚽ mailnews</a><div class="actions"><button class="btn" id="share">Bagikan</button><button class="btn" id="theme">Ganti tema</button><a class="btn" href="index.html">← Beranda</a></div></header>
 <div class="layout"><article class="article">
-<div class="tag" id="category">BERITA SEPAK BOLA</div><h1 id="title">Memuat artikel…</h1><div class="meta" id="meta">Berita pilihan mailnews</div>
+<div class="tag" id="category">BERITA SEPAK BOLA</div><h1 id="title">Memuat artikel…</h1><div class="meta" id="meta">Berita pilihan mailnews</div><p class="disclaimer"><a id="topicLink" href="topic.html">Telusuri liputan topik terkait ↗</a></p>
 <img class="cover" id="cover" alt="" hidden>
 <p class="summary" id="summary"></p><div class="meta-strip" id="articleFacts" aria-label="Informasi ringkasan"></div>
 <section class="section"><h2>Rangkuman mailnews</h2><div id="storyBody" class="story-body"></div><p id="synthesisNote" class="disclaimer"></p></section>
@@ -30,7 +30,7 @@ let sources=[],paragraphs=[];try{const parsed=JSON.parse(get('sources')||'[]');i
 if(!sources.length&&url)sources=[{name:'Penerbit asli',title,description:desc,url,date}];
 const $=id=>document.getElementById(id);
 const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-$('title').textContent=title||'Artikel tidak ditemukan';document.title=(title||'Artikel')+' — mailnews';
+$('title').textContent=title||'Artikel tidak ditemukan';$('topicLink').href='topic.html?q='+encodeURIComponent(title||cat);document.title=(title||'Artikel')+' — mailnews';
 $('category').textContent=cat.toUpperCase()+' · '+editorialType.toUpperCase();$('summary').textContent=desc||'Ringkasan belum tersedia dari sumber berita.';
 $('storyBody').innerHTML=(paragraphs.length?paragraphs:[desc||'Feed tidak menyediakan cuplikan yang cukup untuk menyusun rangkuman lebih lanjut.']).map(x=>'<p>'+esc(x)+'</p>').join('');
 $('synthesisNote').textContent=synthesis||'Rangkuman dibuat dari cuplikan feed yang tersedia; jumlah sumber pembanding dapat dilihat pada daftar atribusi.';
