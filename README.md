@@ -153,3 +153,13 @@ Worker menerima filter `/fixtures?live=all&league=ID`; Secret `APIFOOTBALL_KEY` 
 - Penggabungan topik memakai ambang kemiripan yang sedikit lebih longgar dan mencegah URL yang sama tampil berulang di beberapa kategori. Ringkasan menyertakan cuplikan dari maksimal empat laporan dan atribusi sumber.
 - Bagian yang sebelumnya berlabel Terpopuler diganti menjadi **Sorotan lintas sumber** agar tidak memberi kesan memakai metrik jumlah pembaca; pemilihan didasarkan pada kebaruan dan jumlah penerbit berbeda.
 - Pemeriksaan sintaks JavaScript lulus. Feed langsung dan hasil agregasi perlu diuji dari browser publik karena ketersediaannya bergantung pada RSS penerbit, RSS2JSON, dan jaringan.
+
+
+### Pengembangan berita lanjutan (28 November 2026)
+
+- Feed langsung kategori ANTARA diperinci menggunakan alamat khusus Sepak Bola Indonesia, Internasional, Liga Inggris, Liga Spanyol, Liga Italia, dan Liga Champions; daftar RSS kategori dipublikasikan pada halaman RSS ANTARA.
+- Feed langsung BBC Sport diperinci untuk Premier League dan Champions League. Sky Sports memakai feed khusus sepak bola dan Premier League. The Athletic ditambahkan sebagai sumber feed sepak bola.
+- Halaman artikel menampilkan jumlah penerbit, jumlah cuplikan isi, jumlah bagian ringkasan, perbandingan laporan per penerbit, tautan laporan asli, dan urutan waktu publikasi feed.
+- Urutan waktu pada halaman artikel secara eksplisit adalah urutan publikasi feed, bukan kronologi kejadian pertandingan.
+- Penyusunan ringkasan kini membagi cuplikan yang cukup panjang menjadi beberapa paragraf, mempertahankan atribusi penerbit, dan membatasi maksimal lima bagian. Jika isi sumber terlalu pendek, sistem tidak mengarang paragraf untuk memenuhi jumlah tertentu.
+- Sumber dan feed pihak ketiga dapat berubah, membatasi akses, atau gagal diproses oleh RSS2JSON; halaman harus menampilkan keterbatasan tersebut secara jujur.
