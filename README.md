@@ -94,3 +94,12 @@ Worker menerima filter `/fixtures?live=all&league=ID`; Secret `APIFOOTBALL_KEY` 
 - Hasil jadwal ESPN disimpan pada perangkat pengunjung. Saat panel dibuka kembali, hasil tersimpan langsung ditampilkan sambil mengambil data terbaru; jika sumber gagal, hasil tersimpan tetap ditampilkan dengan label waktu agar tidak disalahartikan sebagai data live.
 - Status jadwal menunjukkan jika sebagian tanggal gagal dimuat. Ini membantu membedakan jadwal kosong dari kegagalan sumber.
 - Validasi ID numerik pada endpoint Worker /match diperbaiki. Worker berhasil di-deploy ke Cloudflare; pemeriksaan sintaks frontend dan Worker lulus.
+
+
+### Pembaruan otomatis berita (27 November 2026)
+
+- Berita otomatis diperbarui setiap 15 menit selama halaman Mailnews aktif, dan diperiksa kembali saat pengguna kembali ke tab setelah jeda.
+- Tombol **Perbarui berita** memungkinkan pengambilan berita secara manual tanpa memuat ulang halaman.
+- Cache berita versi baru menjaga berita terakhir tetap tampil ketika penyedia RSS gagal diakses; label waktu menunjukkan kapan data terakhir berhasil diperbarui.
+- Penggabungan berita menghindari penghitungan ganda dari URL atau nama penerbit yang sama. Jumlah sumber yang tampil merujuk pada penerbit berbeda yang berhasil dicocokkan, bukan jumlah semua artikel di internet.
+- Pemeriksaan sintaks JavaScript lulus. Pembaruan live pada GitHub Pages dan ketersediaan layanan RSS tetap perlu diuji dari browser pengguna.
