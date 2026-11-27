@@ -49,12 +49,12 @@
 <script>
 const feeds=[
 {category:'Indonesia',q:'sepak bola Liga 1 Indonesia klub',outlets:['sepak bola Indonesia site:bola.kompas.com','sepak bola Indonesia site:sport.detik.com','sepak bola Indonesia site:antaranews.com']},
-{category:'Premier League',q:'English Premier League football',outlets:['Premier League site:bbc.com/sport/football','Premier League site:theguardian.com/football','Premier League site:skysports.com/football']},
-{category:'La Liga',q:'Spanish La Liga football',outlets:['La Liga site:bbc.com/sport/football','La Liga site:theguardian.com/football','La Liga site:skysports.com/football']},
-{category:'Serie A',q:'Italian Serie A football',outlets:['Serie A site:bbc.com/sport/football','Serie A site:theguardian.com/football','Serie A site:skysports.com/football']},
-{category:'Bundesliga',q:'German Bundesliga football',outlets:['Bundesliga site:bbc.com/sport/football','Bundesliga site:theguardian.com/football','Bundesliga site:skysports.com/football']},
-{category:'Liga Champions',q:'UEFA Champions League football',outlets:['Champions League site:bbc.com/sport/football','Champions League site:theguardian.com/football','Champions League site:skysports.com/football']},
-{category:'Transfer',q:'transfer pemain sepak bola football transfer',outlets:['football transfer site:bbc.com/sport/football','football transfer site:theguardian.com/football','football transfer site:skysports.com/football']}
+{category:'Premier League',q:'English Premier League football',outlets:['Premier League site:bbc.com/sport/football','Premier League site:theguardian.com/football','Premier League site:espn.com/soccer']},
+{category:'La Liga',q:'Spanish La Liga football',outlets:['La Liga site:bbc.com/sport/football','La Liga site:theguardian.com/football','La Liga site:espn.com/soccer']},
+{category:'Serie A',q:'Italian Serie A football',outlets:['Serie A site:bbc.com/sport/football','Serie A site:theguardian.com/football','Serie A site:espn.com/soccer']},
+{category:'Bundesliga',q:'German Bundesliga football',outlets:['Bundesliga site:bbc.com/sport/football','Bundesliga site:theguardian.com/football','Bundesliga site:espn.com/soccer']},
+{category:'Liga Champions',q:'UEFA Champions League football',outlets:['Champions League site:bbc.com/sport/football','Champions League site:theguardian.com/football','Champions League site:espn.com/soccer']},
+{category:'Transfer',q:'transfer pemain sepak bola football transfer',outlets:['football transfer site:bbc.com/sport/football','football transfer site:theguardian.com/football','football transfer site:espn.com/soccer']}
 ];
 let articles=[],active='Semua',query='';
 const NEWS_FALLBACK_IMAGE='https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=900&q=80';
@@ -80,12 +80,12 @@ async function loadFeed(feed){
    const author=cleanHtml(x.author||'');
    const rawTitle=cleanHtml(x.title),titleSource=rawTitle.match(/\s[-–|]\s([^–—-]{2,60})$/);
    const source=author&&author.toLowerCase()!=='google news'?author:titleSource?titleSource[1]:host==='news.google.com'?'Penerbit melalui Google News':host||'Penerbit berita';
-   return {title:rawTitle,description:cleanHtml(x.description).slice(0,220),url:x.link,date:x.pubDate,image:imageFrom(x),category:feed.category,source};
+   return {title:rawTitle,description:cleanHtml(x.description||x.content||'').slice(0,720),url:x.link,date:x.pubDate,image:imageFrom(x),category:feed.category,source};
   });
  }));
  return results.flatMap(x=>x.status==='fulfilled'?x.value:[]);
 }
-const NEWS_CACHE_KEY='mailnews-news-cache-v3',NEWS_CACHE_TTL=15*60*1000;
+const NEWS_CACHE_KEY='mailnews-news-cache-v4',NEWS_CACHE_TTL=15*60*1000;
 function titleTokens(value){
  const stop=new Set(['yang','dan','dari','untuk','dengan','the','and','for','with','saat','ini','itu','resmi','jadi','bola','football','sepak']);
  return String(value||'').toLowerCase().replace(/[^a-z0-9 ]/g,' ').split(/\s+/).filter(x=>x.length>2&&!stop.has(x));
@@ -117,8 +117,8 @@ function normalizeArticles(items){
  }).sort((a,b)=>new Date(b.date)-new Date(a.date));
 }
 function buildStoryParagraphs(g){
- const reports=(g.sources||[]).map(s=>({name:s.name||'Penerbit berita',text:String(s.description||'').replace(/\\s+/g,' ').trim()})).filter(s=>s.text);
- const clean=s=>String(s||'').replace(/<[^>]*>/g,' ').replace(/\\s+/g,' ').trim();
+ const reports=(g.sources||[]).map(s=>({name:s.name||'Penerbit berita',text:String(s.description||'').replace(/\s+/g,' ').trim()})).filter(s=>s.text);
+ const clean=s=>String(s||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();
  const paragraphs=[],lead=clean(reports[0]?.text||g.description||'');
  paragraphs.push(lead?clean(g.title)+'. '+lead:clean(g.title)+'. Feed belum menyediakan cuplikan isi yang cukup untuk menjelaskan detail berita.');
  if(reports[1]?.text)paragraphs.push('Laporan pembanding dari '+reports[1].name+' menyebutkan: '+clean(reports[1].text));
@@ -150,7 +150,7 @@ function renderFeatured(){
  $('#featuredSummary').textContent=a.description||'Judul berita terbaru dari '+a.source+'.';
  $('#featuredMeta').textContent='SUMBER: '+a.source+' • '+timeAgo(a.date);
  $('#featuredLink').href=detailUrl(a);
- if(a.image)$('#featuredHero').style.backgroundImage="linear-gradient(90deg,#07120def 0%,#07120d99 55%,#07120d12 100%),url("+JSON.stringify(a.image)+")";
+ $('#featuredHero').style.backgroundImage="linear-gradient(90deg,#07120def 0%,#07120d99 55%,#07120d12 100%),url("+JSON.stringify(a.image||NEWS_FALLBACK_IMAGE)+")";
 }
 function renderEditorialPicks(){
  const ranked=rankedArticles().slice(1,4),box=$('#editorialGrid');
