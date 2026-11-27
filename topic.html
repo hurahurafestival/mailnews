@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="id" data-theme="dark">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#101a17">
+<meta name="description" content="Telusuri liputan sepak bola dari berbagai penerbit berdasarkan topik, klub, pemain, atau kompetisi.">
+<title>Eksplorasi Topik — mailnews</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:dark;--bg:#0b1210;--panel:#17241e;--text:#edf5ef;--muted:#9aaba0;--line:rgba(218,242,225,.12);--green:#a6f36a}
+[data-theme=light]{color-scheme:light;--bg:#eef4ef;--panel:#fff;--text:#17251c;--muted:#65756a;--line:rgba(23,50,31,.12);--green:#377c27}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 80% 0%,#31563a40,transparent 38%),var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh}a{color:inherit;text-decoration:none}.wrap{max-width:1050px;margin:auto;padding:24px 20px 60px}.top{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:10px 0 28px;border-bottom:1px solid var(--line)}.brand{font:700 22px 'Space Grotesk';letter-spacing:-1px}.brand span{color:var(--green)}.back{color:var(--muted);font-size:13px}.intro{padding:38px 0 22px}.eyebrow{color:var(--green);font-size:11px;font-weight:800;letter-spacing:1.5px}.intro h1{font:700 clamp(28px,5vw,44px) 'Space Grotesk';margin:10px 0}.intro p,.muted{color:var(--muted);line-height:1.7}.search{display:flex;gap:10px;margin:20px 0}.search input{flex:1;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;color:var(--text);font:inherit}.search button{border:0;border-radius:12px;background:var(--green);color:#13200f;padding:0 20px;font-weight:800;cursor:pointer}.facts{display:flex;gap:9px;flex-wrap:wrap;margin:18px 0 28px}.chip{border:1px solid var(--line);background:var(--panel);border-radius:30px;padding:8px 12px;color:var(--muted);font-size:12px}.section-title{font:700 20px 'Space Grotesk';margin:28px 0 14px}.story{display:grid;grid-template-columns:110px 1fr;gap:16px;padding:17px 0;border-top:1px solid var(--line)}.story img{width:110px;height:82px;object-fit:cover;border-radius:10px;background:var(--panel)}.story h3{font-size:16px;line-height:1.45;margin:0 0 7px}.story h3 a:hover{color:var(--green)}.story p{margin:0 0 8px;color:var(--muted);font-size:13px;line-height:1.6}.meta{font-size:11px;color:var(--muted)}.source{color:var(--green)}.status{padding:20px;border:1px solid var(--line);border-radius:14px;background:var(--panel);color:var(--muted);line-height:1.6}.publisher{display:inline-block;margin:0 7px 7px 0;padding:7px 10px;border-radius:20px;background:var(--panel);border:1px solid var(--line);font-size:12px;color:var(--muted)}.foot{border-top:1px solid var(--line);margin-top:40px;padding-top:18px;color:var(--muted);font-size:12px}@media(max-width:560px){.story{grid-template-columns:82px 1fr;gap:12px}.story img{width:82px;height:76px}.search button{padding:0 13px}}
+</style></head>
+<body><main class="wrap"><header class="top"><a class="brand" href="index.html">mail<span>news</span></a><a class="back" href="index.html">← Kembali ke beranda</a></header>
+<section class="intro"><div class="eyebrow">PUSAT LIPUTAN</div><h1 id="heading">Eksplorasi topik berita</h1><p>Telusuri perkembangan klub, pemain, kompetisi, dan isu sepak bola melalui laporan berbagai penerbit. Hasil disusun dari judul dan cuplikan feed yang tersedia.</p>
+<form class="search" id="searchForm"><input id="query" type="search" placeholder="Contoh: Persib Bandung, Timnas Indonesia, Arsenal…" minlength="2" required><button type="submit">Cari topik</button></form></section>
+<div class="facts" id="facts"></div><section><h2 class="section-title">Penerbit yang ditemukan</h2><div id="publishers" class="muted">Penerbit akan ditampilkan setelah pencarian.</div></section>
+<section><h2 class="section-title">Liputan terbaru</h2><div id="results" class="status">Masukkan nama klub, pemain, kompetisi, atau topik sepak bola untuk memulai pencarian.</div></section>
+<footer class="foot">© <span id="year"></span> mailnews · Hasil pencarian bersumber dari Google News RSS melalui RSS2JSON. Ringkasan feed bukan pengganti laporan lengkap penerbit.</footer></main>
+<script>
+const $=id=>document.getElementById(id),params=new URLSearchParams(location.search);
+const clean=s=>{const e=document.createElement('div');e.innerHTML=s||'';return(e.textContent||'').replace(/\s+/g,' ').trim()};
+const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const safeUrl=s=>{try{const u=new URL(s);return ['http:','https:'].includes(u.protocol)?u.href:''}catch{return ''}};
+const host=s=>{try{return new URL(s).hostname.replace(/^www\./,'')}catch{return 'Penerbit berita'}};
+function detailUrl(x,q){const source={name:x.author||host(x.link),title:clean(x.title),description:clean(x.description),url:x.link||'',date:x.pubDate||''};const desc=clean(x.description);const paragraphs=[desc||'Cuplikan isi belum tersedia dari feed penerbit.','Catatan: halaman ini menyajikan metadata dan cuplikan RSS. Buka laporan asli untuk konteks lengkap dan pembaruan.'];return 'article.html?'+new URLSearchParams({title:clean(x.title),description:desc,url:x.link||'',image:x.thumbnail||x.enclosure?.link||'',category:'Liputan Topik',date:x.pubDate||'',sources:JSON.stringify(x.link?[source]:[]),paragraphs:JSON.stringify(paragraphs),editorialType:'Berita terkait topik'}).toString()}
+function similarity(a,b){const words=s=>new Set(s.toLowerCase().replace(/[^a-z0-9\u00c0-\u024f ]/g,' ').split(/\s+/).filter(w=>w.length>3));const x=words(a),y=words(b);if(!x.size||!y.size)return 0;let n=0;x.forEach(w=>{if(y.has(w))n++});return n/Math.min(x.size,y.size)}
+async function searchTopic(q){
+ $('query').value=q;$('heading').textContent='Topik: '+q;document.title=q+' — Liputan Topik | mailnews';$('results').className='status';$('results').textContent='Mengumpulkan laporan terbaru dari berbagai penerbit…';$('publishers').textContent='Memeriksa penerbit…';$('facts').innerHTML='';
+ const queries=[q+' sepak bola when:7d',q+' football when:7d'];
+ try{
+  const responses=await Promise.all(queries.map(async term=>{const rss='https://news.google.com/rss/search?q='+encodeURIComponent(term)+'&hl=id&gl=ID&ceid=ID:id';const api='https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(rss);const res=await fetch(api);if(!res.ok)throw Error('Feed tidak merespons');const data=await res.json();if(data.status!=='ok')throw Error(data.message||'Feed gagal dibaca');return data.items||[]}));
+  const all=responses.flat().map(x=>({...x,title:clean(x.title),description:clean(x.description)})).filter(x=>x.title&&safeUrl(x.link));
+  const unique=[];for(const x of all.sort((a,b)=>new Date(b.pubDate||0)-new Date(a.pubDate||0))){if(unique.some(y=>y.link===x.link||similarity(y.title,x.title)>.82))continue;unique.push(x)}
+  const list=unique.slice(0,30),pubs=[...new Set(list.map(x=>host(x.link)))];
+  $('facts').innerHTML='<span class="chip">'+list.length+' laporan ditemukan</span><span class="chip">'+pubs.length+' domain penerbit</span><span class="chip">Rentang pencarian 7 hari</span>';
+  $('publishers').innerHTML=pubs.length?pubs.map(x=>'<span class="publisher">'+esc(x)+'</span>').join(''):'Belum ada penerbit yang teridentifikasi.';
+  if(!list.length){$('results').className='status';$('results').textContent='Belum ada laporan yang cocok. Coba kata kunci lain atau periksa kembali nanti.';return}
+  $('results').className='';
+  $('results').innerHTML=list.map(x=>{const link=detailUrl(x,q),image=safeUrl(x.thumbnail||x.enclosure?.link||'');const date=x.pubDate&&!isNaN(new Date(x.pubDate))?new Date(x.pubDate).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'}):'Waktu publikasi tidak tersedia';return '<article class="story">'+(image?'<img loading="lazy" src="'+esc(image)+'" alt="" onerror="this.style.display=\'none\'">':'<div></div>')+'<div><h3><a href="'+esc(link)+'">'+esc(x.title)+'</a></h3><p>'+esc(x.description.slice(0,280)||'Cuplikan isi tidak tersedia dari feed.')+'</p><div class="meta"><span class="source">'+esc(host(x.link))+'</span> · '+esc(date)+'</div></div></article>'}).join('');
+ }catch(e){$('results').className='status';$('results').textContent='Pencarian belum berhasil dimuat: '+(e.message||'kesalahan feed')+'. Coba lagi beberapa saat kemudian.';$('publishers').textContent='Data penerbit belum tersedia.'}
+}
+$('searchForm').addEventListener('submit',e=>{e.preventDefault();const q=$('query').value.trim();if(q.length>1)searchTopic(q)});
+$('year').textContent=new Date().getFullYear();document.documentElement.dataset.theme=localStorage.getItem('mailnews-theme')||'dark';
+const initial=(params.get('q')||'').trim();if(initial)searchTopic(initial);
+</script></body></html>
