@@ -35,7 +35,7 @@ Buka https://hurahurafestival.github.io/mailnews/ atau jalankan `index.html` mel
 - Klasemen dunia dengan pilihan 46 liga/kompetisi dari Asia, Eropa, Amerika Utara, Amerika Selatan, Afrika, dan turnamen internasional; data ditarik dari endpoint ESPN dan hanya ditampilkan jika tersedia.
 - Filter wilayah dan kompetisi, tombol pembaruan manual, kolom main/menang/seri/kalah/gol memasukkan/gol kemasukan/selisih gol/poin, serta cache klasemen maksimal 5 menit.
 - Direktori 26 klub dan halaman profil, berita klub, stadion, serta skuad untuk klub yang didukung penyedia data.
-- Direktori pemain berbasis pilihan klub dengan pencarian nama/posisi, profil individu ESPN, foto dan informasi dasar bila tersedia, statistik individu bila endpoint menyediakannya, serta berita terkait dari Google News RSS. Tautan profil tersedia dari daftar skuad pada halaman klub.
+- Direktori pemain berbasis pilihan klub dengan pencarian nama/posisi, profil individu ESPN, foto dan informasi dasar bila tersedia, statistik profil ESPN bila endpoint menyediakannya, statistik musim API-Football melalui pencocokan nama serta klub, dan berita terkait dari Google News RSS. Tautan profil tersedia dari daftar skuad pada halaman klub.
 
 ## Logo klub
 - Logo SVG klub yang ditampilkan pada direktori utama disimpan di `assets/club-logos/` agar tersedia dari repositori Mailnews.
@@ -58,7 +58,7 @@ Buka https://hurahurafestival.github.io/mailnews/ atau jalankan `index.html` mel
 
 ## Backend data provider (opsional)
 
-Direktori `backend/` berisi Cloudflare Worker proxy untuk API-Football. Proxy menyediakan endpoint livescore global, jadwal berdasarkan tanggal, detail pertandingan, pencarian liga, dan klasemen. API key harus disimpan sebagai Worker secret `APIFOOTBALL_KEY`, bukan di frontend atau repository publik.
+Direktori `backend/` berisi Cloudflare Worker proxy untuk API-Football. Proxy menyediakan endpoint livescore global, jadwal berdasarkan tanggal, detail pertandingan, pencarian liga dan pemain, serta klasemen. API key harus disimpan sebagai Worker secret `APIFOOTBALL_KEY`, bukan di frontend atau repository publik.
 
 Panduan deploy, daftar endpoint, aturan cache, dan batasan cakupan tersedia di [backend/README.md](backend/README.md). Worker belum dipakai oleh frontend secara otomatis: URL Worker dan pemetaan ID liga API-Football perlu dikonfigurasi serta diuji terlebih dahulu. Sampai tahap itu, ESPN tetap sumber utama dan OpenLigaDB hanya cadangan Bundesliga.
 
@@ -133,3 +133,12 @@ Worker menerima filter `/fixtures?live=all&league=ID`; Secret `APIFOOTBALL_KEY` 
 - Rekomendasi artikel terkait mencoba mencari topik yang sama dengan memakai kata-kata dari judul artikel terlebih dahulu, lalu menggunakan feed kategori sebagai cadangan. Ini dapat menemukan berita tentang klub/pemain yang sama jika nama mereka tercantum dalam judul atau hasil RSS.
 - Artikel rekomendasi meneruskan kategori editorial, cuplikan sumber, dan tautan atribusi ke halaman artikel Mailnews.
 - Pemeriksaan sintaks JavaScript halaman utama dan artikel lulus. Ketersediaan RSS dan kecocokan rekomendasi tetap bergantung pada hasil feed langsung.
+
+
+### Statistik pemain per musim (28 November 2026)
+
+- Profil pemain menyediakan pilihan musim 2026, 2025, dan 2024 untuk mengambil statistik agregat API-Football melalui Cloudflare Worker.
+- Worker menambahkan endpoint `/players?search=NAMA&season=YYYY`; statistik ditampilkan hanya jika nama pemain dan nama klub cocok dengan profil.
+- Metrik yang tersedia dapat mencakup penampilan, starter, menit, rating, gol, assist, penalti, kartu, tembakan, umpan, tackle, intersepsi, dan dribel.
+- Endpoint ini menampilkan agregat musim, bukan log partisipasi pemain pada setiap pertandingan. Riwayat pertandingan individual belum ditampilkan karena sumber belum memberikan hubungan penampilan per fixture yang dapat diverifikasi.
+- Worker dan halaman profil diperiksa sintaksnya; data aktual tetap bergantung pada cakupan musim, kuota, serta paket API-Football.
