@@ -10,6 +10,7 @@ Buka https://hurahurafestival.github.io/mailnews/ atau jalankan `index.html` mel
 
 ## Fitur
 - Berita otomatis dari Google News RSS melalui RSS2JSON, dengan pencarian dari berbagai penerbit dan sumber sepak bola (termasuk media Indonesia, BBC, The Guardian, dan Sky Sports).
+- Pencarian terpadu dengan saran langsung untuk berita, klub dalam direktori, dan pintasan ke jadwal pertandingan. Hasil berita dapat menemukan nama pemain bila nama tersebut tercantum dalam judul atau cuplikan feed; ini bukan direktori pemain tersendiri.
 - Pencarian berita dan filter kategori.
 - Cache berita otomatis selama 15 menit dan fallback ke berita tersimpan saat koneksi/API bermasalah.
 - Berita utama pilihan otomatis berdasarkan berita terbaru yang berhasil dimuat, dengan ringkasan dan atribusi sumber di halaman utama.
