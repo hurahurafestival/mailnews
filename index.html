@@ -700,7 +700,7 @@ function renderSearchSuggestions(value){
  if(clubHits.length)html+='<div class="search-group">Klub · buka profil</div>'+clubHits.map(x=>{const p=new URLSearchParams({name:x[0],city:x[1],league:x[2],crest:x[3]});return '<a class="search-result" href="club.html?'+p.toString()+'"><span>'+esc(x[3])+'</span><span><strong>'+esc(x[0])+'</strong><small>'+esc(x[2])+' · '+esc(x[1])+'</small></span></a>'}).join('');
  if(newsHits.length)html+='<div class="search-group">Berita dan nama pemain terkait</div>'+newsHits.map(a=>'<a class="search-result" href="'+esc(detailUrl(a))+'"><span>⚽</span><span>'+esc(a.title)+'<small>'+esc(a.category)+' · '+esc(a.source)+'</small></span></a>').join('');
  if(!html)html='<div class="search-empty">Belum ada kecocokan pada berita yang dimuat atau direktori klub. Coba nama lain.</div>';
- html+='<button type="button" class="search-result search-action" data-search-matches>▣ Cari melalui jadwal & pertandingan</button>';
+ html+='<button type="button" class="search-result search-action" data-search-matches>▣ Buka jadwal & pertandingan</button>';
  panel.innerHTML=html;panel.hidden=false;
 }
 $('#searchInput').addEventListener('input',e=>{query=e.target.value;render();renderSearchSuggestions(query)});
