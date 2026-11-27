@@ -35,6 +35,7 @@ Buka https://hurahurafestival.github.io/mailnews/ atau jalankan `index.html` mel
 - Klasemen dunia dengan pilihan 46 liga/kompetisi dari Asia, Eropa, Amerika Utara, Amerika Selatan, Afrika, dan turnamen internasional; data ditarik dari endpoint ESPN dan hanya ditampilkan jika tersedia.
 - Filter wilayah dan kompetisi, tombol pembaruan manual, kolom main/menang/seri/kalah/gol memasukkan/gol kemasukan/selisih gol/poin, serta cache klasemen maksimal 5 menit.
 - Direktori 26 klub dan halaman profil, berita klub, stadion, serta skuad untuk klub yang didukung penyedia data.
+- Direktori pemain berbasis pilihan klub dengan pencarian nama/posisi, profil individu ESPN, foto dan informasi dasar bila tersedia, statistik individu bila endpoint menyediakannya, serta berita terkait dari Google News RSS. Tautan profil tersedia dari daftar skuad pada halaman klub.
 
 ## Logo klub
 - Logo SVG klub yang ditampilkan pada direktori utama disimpan di `assets/club-logos/` agar tersedia dari repositori Mailnews.
