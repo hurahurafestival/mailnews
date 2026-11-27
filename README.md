@@ -163,3 +163,12 @@ Worker menerima filter `/fixtures?live=all&league=ID`; Secret `APIFOOTBALL_KEY` 
 - Urutan waktu pada halaman artikel secara eksplisit adalah urutan publikasi feed, bukan kronologi kejadian pertandingan.
 - Penyusunan ringkasan kini membagi cuplikan yang cukup panjang menjadi beberapa paragraf, mempertahankan atribusi penerbit, dan membatasi maksimal lima bagian. Jika isi sumber terlalu pendek, sistem tidak mengarang paragraf untuk memenuhi jumlah tertentu.
 - Sumber dan feed pihak ketiga dapat berubah, membatasi akses, atau gagal diproses oleh RSS2JSON; halaman harus menampilkan keterbatasan tersebut secara jujur.
+
+
+## Eksplorasi topik berita
+
+- Halaman `topic.html` memungkinkan pencarian liputan berdasarkan nama klub, pemain, kompetisi, atau isu.
+- Hasil dihimpun dari Google News RSS untuk rentang 7 hari, menampilkan cuplikan, domain penerbit, dan waktu publikasi yang disediakan feed.
+- Pengelompokan duplikat memakai URL dan kemiripan judul sederhana. Ini bukan verifikasi bahwa semua laporan membahas kejadian identik.
+- Dari halaman artikel, tautan eksplorasi membawa judul artikel sebagai kata kunci pencarian topik.
+- Feed Google News RSS dan layanan RSS2JSON merupakan dependensi eksternal; ketersediaan dan isi feed dapat berubah. Hasil tidak dianggap sebagai arsip lengkap.
