@@ -33,9 +33,9 @@
 <section class="hero" id="featuredHero"><div class="hero-content"><span class="tag" id="featuredTag">PILIHAN OTOMATIS</span><h2 id="featuredTitle">Semua cerita sepak bola, dalam satu tempat.</h2><p id="featuredSummary">Berita utama pilihan otomatis dari feed yang tersedia.</p><div class="hero-meta" id="featuredMeta">MAILNEWS EDITORIAL • BERITA SEPAK BOLA</div><p style="margin:17px 0 0"><a id="featuredLink" class="filter active" href="#newsSection" style="display:inline-block;text-decoration:none">Baca ringkasan ↗</a></p></div></section>
 <section id="editorialSection">
 <div class="section-head"><h2>Berita pilihan</h2><small>Urutan otomatis berdasarkan relevansi feed dan kebaruan</small></div><div class="editorial-grid" id="editorialGrid"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
-<div class="section-head" style="margin-top:30px"><h2>Terpopuler</h2><small>Dinilai dari kebaruan, jumlah sumber, dan kelengkapan cuplikan</small></div><div class="editorial-grid" id="popularGrid"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
+<div class="section-head" style="margin-top:30px"><h2>Sorotan lintas sumber</h2><small>Dipilih dari kebaruan dan jumlah penerbit yang melaporkan</small></div><div class="editorial-grid" id="popularGrid"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
 <div class="section-head" style="margin-top:30px"><h2>Berita terbaru</h2><small>Urut berdasarkan waktu publikasi feed</small></div><div class="news-grid" id="latestGrid"></div>
-<div class="section-head" style="margin-top:30px"><h2>Jelajahi kategori</h2><small>Halaman pilihan berita per kompetisi dan topik</small></div><div class="filters" id="categoryExplore"><button class="filter" data-explore="Indonesia">Indonesia</button><button class="filter" data-explore="Premier League">Premier League</button><button class="filter" data-explore="La Liga">La Liga</button><button class="filter" data-explore="Serie A">Serie A</button><button class="filter" data-explore="Bundesliga">Bundesliga</button><button class="filter" data-explore="Liga Champions">Liga Champions</button><button class="filter" data-explore="Transfer">Transfer</button></div>
+<div class="section-head" style="margin-top:30px"><h2>Jelajahi kategori</h2><small>Halaman pilihan berita per kompetisi dan topik</small></div><div class="filters" id="categoryExplore"><button class="filter" data-explore="Indonesia">Indonesia</button><button class="filter" data-explore="Timnas Indonesia">Timnas</button><button class="filter" data-explore="Sepak Bola Dunia">Dunia</button><button class="filter" data-explore="Premier League">Premier League</button><button class="filter" data-explore="La Liga">La Liga</button><button class="filter" data-explore="Serie A">Serie A</button><button class="filter" data-explore="Bundesliga">Bundesliga</button><button class="filter" data-explore="Liga Champions">Liga Champions</button><button class="filter" data-explore="Transfer">Transfer</button></div>
 <div class="section-head" style="margin-top:18px"><h2 id="categoryHeading">Pilihan berita Indonesia</h2><small id="categorySubheading">Berita terbaru berdasarkan kategori</small></div><div class="news-grid" id="categoryGrid"></div>
 </section>
 <section id="matchCenter" hidden><div class="section-head"><h2>Jadwal & hasil pertandingan</h2><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><small id="matchStatus">Pilih kompetisi</small><button class="filter active" id="refreshMatches" type="button">↻ Perbarui</button></div></div><div class="filters" id="leagueFilters"><button class="filter active" data-league="eng.1">Premier League</button><button class="filter" data-league="esp.1">La Liga</button><button class="filter" data-league="ita.1">Serie A</button><button class="filter" data-league="ger.1">Bundesliga</button><button class="filter" data-league="uefa.champions">Liga Champions</button><button class="filter" data-league="idn.1">Liga Indonesia</button><button class="filter" data-league="kor.1">K League 1</button><button class="filter" data-league="aus.1">A-League</button><button class="filter" data-league="chn.1">Chinese Super League</button><button class="filter" data-league="all-live">Semua Live</button><button class="filter" data-league="all-today">Jadwal Hari Ini</button></div><div class="filters" id="matchDateControls" style="align-items:center;gap:8px;margin-top:-8px"><button class="filter" id="matchDatePrev" type="button" aria-label="Mundur satu hari">← Hari sebelumnya</button><label class="muted" for="matchStartDate" style="font-size:12px">Mulai tanggal</label><input class="filter" id="matchStartDate" type="date" aria-label="Tanggal mulai jadwal" style="color:var(--text);background:var(--panel)"><button class="filter" id="matchDateNext" type="button" aria-label="Maju satu hari">Hari berikutnya →</button><button class="filter" id="matchDateToday" type="button">Hari ini</button></div><div id="matchGrid" class="news-grid"></div><p style="color:var(--muted);font-size:11px">Jadwal menampilkan rentang 8 hari mulai dari tanggal yang dipilih. Data berasal dari ESPN dan AFC untuk Liga Indonesia; skor langsung lintas kompetisi tersedia melalui API-Football sesuai cakupan penyedia.</p></section><section id="standingsPanel" hidden>
@@ -48,20 +48,22 @@
 <div id="standingsTable" class="news-grid"></div>
 <p style="color:var(--muted);font-size:11px">Klasemen memakai tabel musim berjalan ESPN. Saat panel klasemen terbuka, Mailnews memeriksa skor setiap 1 menit dan memuat ulang tabel saat mendeteksi pertandingan selesai; pembaruan cadangan berjalan setiap 5 menit. Data diperbarui hanya setelah penyedia menerbitkan hasilnya. Sumber utama: ESPN. Bundesliga memiliki sumber cadangan OpenLigaDB jika ESPN gagal; data OpenLigaDB dikelola komunitas dan dapat terlambat. Kompetisi yang tidak memiliki data tetap ditandai belum tersedia.</p>
 </section><section id="newsSection"><div class="section-head"><h2>Berita terbaru</h2><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><small id="resultCount">Memuat berita…</small><button class="filter" id="refreshNews" type="button">↻ Perbarui berita</button></div></div>
-<div class="filters" id="filters"><button class="filter active" data-filter="Semua">Semua berita</button><button class="filter" data-filter="Indonesia">Indonesia</button><button class="filter" data-filter="Premier League">Premier League</button><button class="filter" data-filter="La Liga">La Liga</button><button class="filter" data-filter="Serie A">Serie A</button><button class="filter" data-filter="Bundesliga">Bundesliga</button><button class="filter" data-filter="Liga Champions">Liga Champions</button><button class="filter" data-filter="Transfer">Transfer</button></div>
+<div class="filters" id="filters"><button class="filter active" data-filter="Semua">Semua berita</button><button class="filter" data-filter="Indonesia">Indonesia</button><button class="filter" data-filter="Timnas Indonesia">Timnas</button><button class="filter" data-filter="Sepak Bola Dunia">Dunia</button><button class="filter" data-filter="Premier League">Premier League</button><button class="filter" data-filter="La Liga">La Liga</button><button class="filter" data-filter="Serie A">Serie A</button><button class="filter" data-filter="Bundesliga">Bundesliga</button><button class="filter" data-filter="Liga Champions">Liga Champions</button><button class="filter" data-filter="Transfer">Transfer</button></div>
 <div class="filters" id="typeFilters" aria-label="Jenis berita"><span class="type-filter-label">JENIS BERITA</span><button class="filter type-active" data-type="Semua">Semua jenis</button><button class="filter" data-type="Berita Utama">Berita Utama</button><button class="filter" data-type="Analisis Pertandingan">Analisis Pertandingan</button><button class="filter" data-type="Transfer">Transfer</button><button class="filter" data-type="Berita Klub">Berita Klub</button></div>
 <div class="news-grid" id="newsGrid"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
 </section><footer class="footer"><span>© <span id="year"></span> mailnews. Dibuat untuk pecinta sepak bola.</span><span>Sumber berita: Google News RSS melalui RSS2JSON. Hak cipta konten milik penerbit masing-masing.</span></footer>
 </main></div><script src="assets/club-logos.js"></script>
 <script>
 const feeds=[
-{category:'Indonesia',q:'sepak bola Liga 1 Indonesia klub',outlets:['sepak bola Indonesia site:bola.kompas.com','sepak bola Indonesia site:sport.detik.com','sepak bola Indonesia site:antaranews.com']},
-{category:'Premier League',q:'English Premier League football',outlets:['Premier League site:bbc.com/sport/football','Premier League site:theguardian.com/football','Premier League site:espn.com/soccer']},
-{category:'La Liga',q:'Spanish La Liga football',outlets:['La Liga site:bbc.com/sport/football','La Liga site:theguardian.com/football','La Liga site:espn.com/soccer']},
-{category:'Serie A',q:'Italian Serie A football',outlets:['Serie A site:bbc.com/sport/football','Serie A site:theguardian.com/football','Serie A site:espn.com/soccer']},
-{category:'Bundesliga',q:'German Bundesliga football',outlets:['Bundesliga site:bbc.com/sport/football','Bundesliga site:theguardian.com/football','Bundesliga site:espn.com/soccer']},
-{category:'Liga Champions',q:'UEFA Champions League football',outlets:['Champions League site:bbc.com/sport/football','Champions League site:theguardian.com/football','Champions League site:espn.com/soccer']},
-{category:'Transfer',q:'transfer pemain sepak bola football transfer',outlets:['football transfer site:bbc.com/sport/football','football transfer site:theguardian.com/football','football transfer site:espn.com/soccer']}
+{category:'Indonesia',q:'sepak bola Liga 1 Indonesia klub when:7d',outlets:['sepak bola Indonesia site:bola.kompas.com when:7d','sepak bola Indonesia site:sport.detik.com when:7d','sepak bola Indonesia site:antaranews.com when:7d'],direct:[{name:'ANTARA',url:'https://www.antaranews.com/rss/sepakbola.xml'},{name:'Detik Sport',url:'https://rss.detik.com/index.php/sepakbola'},{name:'Okezone Bola',url:'https://sindikasi.okezone.com/index.php/rss/14/RSS2.0'}]},
+{category:'Timnas Indonesia',q:'Timnas Indonesia sepak bola when:7d',outlets:['Timnas Indonesia site:pssi.org when:7d','Timnas Indonesia site:antaranews.com when:7d','Timnas Indonesia site:bola.kompas.com when:7d']},
+{category:'Premier League',q:'English Premier League football when:7d',outlets:['Premier League site:bbc.com/sport/football when:7d','Premier League site:theguardian.com/football when:7d','Premier League site:espn.com/soccer when:7d']},
+{category:'La Liga',q:'Spanish La Liga football when:7d',outlets:['La Liga site:bbc.com/sport/football when:7d','La Liga site:theguardian.com/football when:7d','La Liga site:espn.com/soccer when:7d']},
+{category:'Serie A',q:'Italian Serie A football when:7d',outlets:['Serie A site:bbc.com/sport/football when:7d','Serie A site:theguardian.com/football when:7d','Serie A site:espn.com/soccer when:7d']},
+{category:'Bundesliga',q:'German Bundesliga football when:7d',outlets:['Bundesliga site:bbc.com/sport/football when:7d','Bundesliga site:theguardian.com/football when:7d','Bundesliga site:espn.com/soccer when:7d']},
+{category:'Liga Champions',q:'UEFA Champions League football when:7d',outlets:['Champions League site:bbc.com/sport/football when:7d','Champions League site:theguardian.com/football when:7d','Champions League site:espn.com/soccer when:7d']},
+{category:'Transfer',q:'transfer pemain sepak bola football transfer when:7d',outlets:['football transfer site:bbc.com/sport/football when:7d','football transfer site:theguardian.com/football when:7d','football transfer site:espn.com/soccer when:7d']},
+{category:'Sepak Bola Dunia',q:'international football world football when:7d',outlets:['international football site:bbc.com/sport/football when:7d','international football site:theguardian.com/football when:7d','international football site:espn.com/soccer when:7d'],direct:[{name:'BBC Sport',url:'https://feeds.bbci.co.uk/sport/football/rss.xml'},{name:'Sky Sports',url:'https://www.skysports.com/rss/12040'},{name:'The Guardian',url:'https://www.theguardian.com/football/rss'}]}
 ];
 let articles=[],active='Semua',activeType='Semua',query='';
 const NEWS_FALLBACK_IMAGE='https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=900&q=80';
@@ -76,24 +78,26 @@ function imageFrom(item){
  const m=(item.description||'').match(/<img[^>]+(?:src|data-src)=["']([^"']+)/i);return m&&/^https?:\/\//i.test(m[1])?m[1]:'';
 }
 async function loadFeed(feed){
- const searches=[feed.q,...(feed.outlets||[])];
- const results=await Promise.allSettled(searches.map(async q=>{
-  const rss='https://news.google.com/rss/search?q='+encodeURIComponent(q)+'&hl=id&gl=ID&ceid=ID:id';
-  const url='https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(rss);
-  const res=await fetch(url);if(!res.ok)throw Error('RSS request failed');
-  const json=await res.json();if(json.status!=='ok')throw Error('RSS response error');
-  return (json.items||[]).map(x=>{
-   let host='';try{host=new URL(x.link).hostname.replace(/^www\./,'')}catch{}
-   const author=cleanHtml(x.author||'');
-   const rawTitle=cleanHtml(x.title),titleSource=rawTitle.match(/\s[-–|]\s([^–—-]{2,60})$/);
-   const source=author&&author.toLowerCase()!=='google news'?author:titleSource?titleSource[1]:host==='news.google.com'?'Penerbit melalui Google News':host||'Penerbit berita';
-   return {title:rawTitle,description:cleanHtml(x.description||x.content||'').slice(0,720),url:x.link,date:x.pubDate,image:imageFrom(x),category:feed.category,source};
-  });
+ const tasks=[...( [feed.q,...(feed.outlets||[])].filter(Boolean).map(query=>({kind:'search',query})) ),...(feed.direct||[]).map(source=>({kind:'direct',...source}))];
+ const results=await Promise.allSettled(tasks.map(async task=>{
+  const rss=task.kind==='search'?'https://news.google.com/rss/search?q='+encodeURIComponent(task.query)+'&hl=id&gl=ID&ceid=ID:id':task.url;
+  const api='https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(rss);
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
+  try{
+   const res=await fetch(api,{signal:controller.signal});if(!res.ok)throw Error('RSS HTTP '+res.status);
+   const data=await res.json();if(data.status!=='ok')throw Error('RSS response error');
+   return (data.items||[]).map(x=>{
+    let host='';try{host=new URL(x.link).hostname.replace(/^www\./,'')}catch{}
+    const author=cleanHtml(x.author||''),rawTitle=cleanHtml(x.title),titleSource=rawTitle.match(/\s[-–|]\s([^–—-]{2,60})$/);
+    const title=task.kind==='search'&&titleSource?rawTitle.slice(0,titleSource.index).trim():rawTitle;
+    const source=task.kind==='direct'?task.name:(author&&author.toLowerCase()!=='google news'?author:titleSource?titleSource[1]:host==='news.google.com'?'Penerbit melalui Google News':host||'Penerbit berita');
+    return {title,description:cleanHtml(x.description||x.content||'').slice(0,900),url:x.link,date:x.pubDate||'',image:imageFrom(x),category:feed.category,source};
+   });
+  }finally{clearTimeout(timer)}
  }));
  return results.flatMap(x=>x.status==='fulfilled'?x.value:[]);
 }
-const NEWS_CACHE_KEY='mailnews-news-cache-v6',NEWS_CACHE_TTL=15*60*1000;
-let newsRefreshBusy=false,newsLastUpdated=null;
+const NEWS_CACHE_KEY='mailnews-news-cache-v7',NEWS_CACHE_TTL=10*60*1000;
 function titleTokens(value){
  const stop=new Set(['yang','dan','dari','untuk','dengan','the','and','for','with','saat','ini','itu','resmi','jadi','bola','football','sepak']);
  return String(value||'').toLowerCase().replace(/[^a-z0-9 ]/g,' ').split(/\s+/).filter(x=>x.length>2&&!stop.has(x));
@@ -116,30 +120,28 @@ function topicSimilarity(group,item){
  return Math.max(0,...titles.map(t=>titleSimilarity(t,item.title)));
 }
 function normalizeArticles(items){
- const groups=[];
+ const groups=[],seenUrls=new Set();
  items.filter(a=>a.title&&a.url).sort((a,b)=>new Date(b.date)-new Date(a.date)).forEach(item=>{
+  if(seenUrls.has(item.url))return;
   const match=groups.find(g=>{
    if(g.category!==item.category)return false;
-   if(g.sources.some(x=>x.url===item.url))return true;
    const oldTime=new Date(g.date).getTime(),newTime=new Date(item.date).getTime();
    if(Number.isFinite(oldTime)&&Number.isFinite(newTime)&&Math.abs(oldTime-newTime)>72*3600000)return false;
-   return topicSimilarity(g,item)>=0.48;
+   return topicSimilarity(g,item)>=0.42;
   });
   const source={name:item.source||'Penerbit berita',title:item.title,description:item.description||'',url:item.url,date:item.date||''};
   if(match){
-   if(!match.sources.some(x=>x.url===source.url)&&!match.sources.some(x=>x.name.toLowerCase()===source.name.toLowerCase()))match.sources.push(source);
+   if(!match.sources.some(x=>x.name.toLowerCase()===source.name.toLowerCase()))match.sources.push(source);
    if(item.description&&!match.snippets.includes(item.description))match.snippets.push(item.description);
    if(item.image&&!match.image)match.image=item.image;
-   if(new Date(item.date)>new Date(match.date)){match.date=item.date;match.title=item.title;}
+   if(new Date(item.date)>new Date(match.date)){match.date=item.date;match.title=item.title;match.url=item.url;match.source=item.source;}
   }else groups.push({...item,sources:[source],snippets:item.description?[item.description]:[]});
+  seenUrls.add(item.url);
  });
  return groups.map(g=>{
-  g.sources=g.sources.slice(0,5);
-  g.description=g.snippets.slice(0,3).join(' • ').slice(0,620);
-  g.synthesis=g.sources.length>1?'Mailnews merangkai ringkasan dari '+g.sources.length+' penerbit yang membahas topik serupa. Setiap paragraf tetap ditautkan pada cuplikan sumber; ini bukan salinan artikel lengkap.':'Ringkasan hanya memiliki satu sumber yang cocok. Mailnews tidak menambahkan fakta, skor, kutipan, atau detail yang tidak tercantum di feed.';
-  g.editorialType=classifyEditorialType(g);
-  g.paragraphs=buildStoryParagraphs(g);
-  return g;
+  g.sources=g.sources.slice(0,5);g.description=g.snippets.slice(0,4).join(' • ').slice(0,900);
+  g.synthesis=g.sources.length>1?'Ringkasan menggabungkan cuplikan dari '+g.sources.length+' penerbit berbeda. Setiap laporan tetap memiliki atribusi dan tautan sumber.':'Hanya satu penerbit yang cocok ditemukan untuk topik ini. Mailnews tidak menambahkan fakta yang tidak ada di cuplikan.';
+  g.editorialType=classifyEditorialType(g);g.paragraphs=buildStoryParagraphs(g);return g;
  }).sort((a,b)=>new Date(b.date)-new Date(a.date));
 }
 function buildStoryParagraphs(g){
@@ -176,11 +178,13 @@ async function loadNews(force=false){
    if(!force&&Date.now()-new Date(cached.savedAt).getTime()<NEWS_CACHE_TTL)return;
   }
   const results=await Promise.allSettled(feeds.map(loadFeed));
+  const failed=results.filter(x=>x.status==='rejected').length;
   const fresh=normalizeArticles(results.flatMap(x=>x.status==='fulfilled'?x.value:[]));
   if(!fresh.length)throw Error('Sumber berita belum dapat diakses');
   articles=fresh;newsLastUpdated=new Date().toISOString();
-  try{localStorage.setItem(NEWS_CACHE_KEY,JSON.stringify({savedAt:newsLastUpdated,items:articles.slice(0,100)}))}catch{}
+  try{localStorage.setItem(NEWS_CACHE_KEY,JSON.stringify({savedAt:newsLastUpdated,items:articles.slice(0,150)}))}catch{}
   render();
+  if(failed)$('#resultCount').textContent=articles.length+' artikel · '+failed+' kategori sumber gagal · '+timeAgo(newsLastUpdated);
  }catch(e){
   if(cached?.items?.length){articles=cached.items;newsLastUpdated=cached.savedAt||null;render();$('#resultCount').textContent='Mode cache · '+timeAgo(cached.savedAt);}
   else{grid.innerHTML='<div class="empty">Berita otomatis belum dapat dimuat saat ini.<br>Periksa koneksi internet lalu coba muat ulang halaman.<br><br><button class="filter active" onclick="loadNews(true)">Coba lagi</button></div>';$('#resultCount').textContent='Sumber belum tersedia';}
@@ -217,7 +221,7 @@ let activeExplore='Indonesia';
 function miniNewsCard(a){return '<article class="news-card"><div class="news-image"><img loading="lazy" src="'+esc(a.image||NEWS_FALLBACK_IMAGE)+'" alt="Foto berita sepak bola" onerror="this.style.display=\'none\'"><span class="tag">'+esc(a.category)+'</span></div><div class="news-body"><h3><a class="article-link" href="'+esc(detailUrl(a))+'">'+esc(a.title)+'</a></h3><p>'+esc(a.description||'Cuplikan belum tersedia.')+'</p><div class="news-meta"><span>'+esc(timeAgo(a.date))+'</span><span>'+esc(a.editorialType||'Berita Utama')+' · '+(a.sources?.length||1)+' sumber</span></div></div></article>'}
 function renderDiscovery(){
  const popular=[...articles].sort((a,b)=>{
-  const score=x=>editorialScore(x)+(Math.min((x.sources||[]).length,4)*3)+(x.description?2:0);
+  const score=x=>editorialScore(x)+(Math.min((x.sources||[]).length,4)*5)+(x.description?1:0);
   return score(b)-score(a);
  }).slice(0,3);
  $('#popularGrid').innerHTML=popular.length?popular.map((a,i)=>'<article class="editorial-card"><a class="editorial-thumb" href="'+esc(detailUrl(a))+'"><img loading="lazy" src="'+esc(a.image||NEWS_FALLBACK_IMAGE)+'" alt="Foto berita" onerror="this.parentElement.style.display=\'none\'"></a><span class="editorial-rank">'+(i+1)+'</span><div><h3><a class="article-link" href="'+esc(detailUrl(a))+'">'+esc(a.title)+'</a></h3><small>'+esc(a.sources?.length||1)+' sumber · '+esc(timeAgo(a.date))+'</small></div></article>').join(''):'<div class="empty">Belum ada data popularitas.</div>';
