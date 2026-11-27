@@ -25,13 +25,13 @@
 <footer class="foot">© <span id="year"></span> mailnews · Berita sepak bola Indonesia dan dunia.</footer>
 </main><script>
 const p=new URLSearchParams(location.search),get=k=>p.get(k)||'';
-const title=get('title'),desc=get('description'),url=get('url'),img=get('image'),cat=get('category')||'Berita sepak bola',date=get('date'),synthesis=get('synthesis');
+const title=get('title'),desc=get('description'),url=get('url'),img=get('image'),cat=get('category')||'Berita sepak bola',editorialType=get('editorialType')||'Berita Utama',date=get('date'),synthesis=get('synthesis');
 let sources=[],paragraphs=[];try{const parsed=JSON.parse(get('sources')||'[]');if(Array.isArray(parsed))sources=parsed.filter(x=>x&&x.url)}catch{}try{const parsed=JSON.parse(get('paragraphs')||'[]');if(Array.isArray(parsed))paragraphs=parsed.filter(x=>typeof x==='string').slice(0,5)}catch{}
 if(!sources.length&&url)sources=[{name:'Penerbit asli',title,description:desc,url,date}];
 const $=id=>document.getElementById(id);
 const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 $('title').textContent=title||'Artikel tidak ditemukan';document.title=(title||'Artikel')+' — mailnews';
-$('category').textContent=cat.toUpperCase();$('summary').textContent=desc||'Ringkasan belum tersedia dari sumber berita.';
+$('category').textContent=cat.toUpperCase()+' · '+editorialType.toUpperCase();$('summary').textContent=desc||'Ringkasan belum tersedia dari sumber berita.';
 $('storyBody').innerHTML=(paragraphs.length?paragraphs:[desc||'Feed tidak menyediakan cuplikan yang cukup untuk menyusun rangkuman lebih lanjut.']).map(x=>'<p>'+esc(x)+'</p>').join('');
 $('synthesisNote').textContent=synthesis||'Rangkuman dibuat dari cuplikan feed yang tersedia; jumlah sumber pembanding dapat dilihat pada daftar atribusi.';
 $('sourceReports').innerHTML=sources.map((x,i)=>'<div class="related" style="padding:14px 0"><strong style="font-size:13px">'+esc(x.name||'Penerbit berita')+'</strong><p style="margin:7px 0;color:var(--muted);line-height:1.7">'+esc(x.description||x.title||'Cuplikan tidak tersedia.')+'</p><small style="color:var(--muted)">'+esc(x.date?new Date(x.date).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'}):'Waktu tidak tersedia')+'</small></div>').join('');
