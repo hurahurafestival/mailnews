@@ -9,11 +9,11 @@ Buka https://hurahurafestival.github.io/mailnews/ atau jalankan `index.html` mel
 3. Pilih branch **main** dan folder **/(root)**.
 
 ## Fitur
-- Berita otomatis dari Google News RSS melalui RSS2JSON, dengan pencarian dari berbagai penerbit dan sumber sepak bola (termasuk media Indonesia, BBC, The Guardian, dan Sky Sports).
+- Berita otomatis dari Google News RSS dan RSS langsung penerbit melalui RSS2JSON. Cakupan diperluas ke Liga Indonesia, Timnas Indonesia, Premier League, La Liga, Serie A, Bundesliga, Liga Champions, transfer, dan sepak bola dunia; sumber langsung mencakup ANTARA, Detik Sport, Okezone Bola, BBC Sport, Sky Sports, dan The Guardian jika feed tersedia.
 - Pencarian terpadu dengan saran langsung untuk berita, klub dalam direktori, dan pintasan ke jadwal pertandingan. Hasil berita dapat menemukan nama pemain bila nama tersebut tercantum dalam judul atau cuplikan feed; ini bukan direktori pemain tersendiri.
 - Pencarian berita dan filter kategori.
-- Cache berita otomatis selama 15 menit dan fallback ke berita tersimpan saat koneksi/API bermasalah.
-- Berita utama pilihan otomatis berdasarkan berita terbaru yang berhasil dimuat, dengan ringkasan dan atribusi sumber di halaman utama.
+- Cache berita otomatis selama 10 menit dan fallback ke berita tersimpan saat koneksi/API bermasalah. Feed dibatasi waktu 12 detik per permintaan; kegagalan kategori ditampilkan sebagai status parsial.
+- Sorotan berita otomatis berdasarkan kebaruan dan jumlah penerbit berbeda yang cocok; bagian ini bukan peringkat jumlah pembaca/klik. Berita terbaru dan filter Timnas Indonesia serta sepak bola dunia tersedia di beranda.
 - Pengelompokan laporan bertopik serupa dari beberapa penerbit agar satu peristiwa tidak memenuhi daftar sebagai berita duplikat.
 - Rangkuman lintas sumber yang dirangkai dari judul dan cuplikan RSS, disertai atribusi serta tautan masing-masing penerbit.
 - Rekomendasi berita terkait pada halaman artikel agar pembaca tetap menjelajah di mailnews.
@@ -142,3 +142,14 @@ Worker menerima filter `/fixtures?live=all&league=ID`; Secret `APIFOOTBALL_KEY` 
 - Metrik yang tersedia dapat mencakup penampilan, starter, menit, rating, gol, assist, penalti, kartu, tembakan, umpan, tackle, intersepsi, dan dribel.
 - Endpoint ini menampilkan agregat musim, bukan log partisipasi pemain pada setiap pertandingan. Riwayat pertandingan individual belum ditampilkan karena sumber belum memberikan hubungan penampilan per fixture yang dapat diverifikasi.
 - Worker dan halaman profil diperiksa sintaksnya; data aktual tetap bergantung pada cakupan musim, kuota, serta paket API-Football.
+
+
+### Perluasan redaksi otomatis (28 November 2026)
+
+- Feed berita kini mencakup kategori Timnas Indonesia dan Sepak Bola Dunia selain liga utama, kompetisi Eropa, Indonesia, dan transfer.
+- Pengambilan berita memadukan Google News RSS untuk pencarian lintas penerbit dengan RSS langsung ANTARA, Detik Sport, Okezone Bola, BBC Sport, Sky Sports, dan The Guardian. Feed langsung diambil melalui RSS2JSON agar dapat diproses dari frontend.
+- Pencarian Google News dibatasi ke tujuh hari terakhir agar hasil lama tidak mendominasi. Cache diturunkan menjadi 10 menit dan ukuran cache dinaikkan hingga 150 artikel.
+- Pemrosesan gambar RSS kini juga membaca variasi thumbnail berbentuk objek. Judul hasil Google News dibersihkan dari akhiran nama penerbit bila tersedia.
+- Penggabungan topik memakai ambang kemiripan yang sedikit lebih longgar dan mencegah URL yang sama tampil berulang di beberapa kategori. Ringkasan menyertakan cuplikan dari maksimal empat laporan dan atribusi sumber.
+- Bagian yang sebelumnya berlabel Terpopuler diganti menjadi **Sorotan lintas sumber** agar tidak memberi kesan memakai metrik jumlah pembaca; pemilihan didasarkan pada kebaruan dan jumlah penerbit berbeda.
+- Pemeriksaan sintaks JavaScript lulus. Feed langsung dan hasil agregasi perlu diuji dari browser publik karena ketersediaannya bergantung pada RSS penerbit, RSS2JSON, dan jaringan.
