@@ -111,3 +111,13 @@ Worker menerima filter `/fixtures?live=all&league=ID`; Secret `APIFOOTBALL_KEY` 
 - Kalimat duplikat disaring sebelum disusun. Paragraf pembuka mengambil cuplikan pertama, sedangkan paragraf berikutnya diberi atribusi penerbit masing-masing.
 - Rangkuman memuat maksimal lima paragraf dan menyertakan catatan bahwa bahan berasal dari cuplikan RSS, bukan verifikasi atau salinan artikel lengkap. Jumlah paragraf dapat lebih sedikit bila sumber tidak menyediakan isi yang memadai.
 - Pemeriksaan sintaks JavaScript lulus. Kualitas hasil akhir tetap bergantung pada isi dan bahasa cuplikan yang diberikan masing-masing penerbit.
+
+
+### Kategori editorial dan pengelompokan topik (27 November 2026)
+
+- Beranda menyediakan filter jenis berita **Berita Utama**, **Analisis Pertandingan**, **Transfer**, dan **Berita Klub**, terpisah dari filter kompetisi/liga.
+- Klasifikasi editorial memakai kata kunci pada judul dan cuplikan RSS. Klasifikasi ini bersifat otomatis dan indikatif; label bukan penilaian atau verifikasi redaksi.
+- Halaman artikel menampilkan jenis editorial bersama kategori kompetisinya.
+- Pengelompokan berita membandingkan judul utama dan judul dari penerbit yang telah masuk ke grup, mewajibkan sedikitnya dua token topik yang sama, membatasi penggabungan ke kategori yang sama, dan menolak artikel dengan jarak waktu lebih dari 72 jam.
+- Cache berita dinaikkan ke versi v6 agar hasil klasifikasi dan pengelompokan baru dihitung ulang pada browser.
+- Pemeriksaan sintaks JavaScript frontend lulus; data klasifikasi aktual tetap perlu ditinjau dari browser setelah RSS berhasil dimuat.
