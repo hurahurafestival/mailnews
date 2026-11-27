@@ -121,3 +121,13 @@ Worker menerima filter `/fixtures?live=all&league=ID`; Secret `APIFOOTBALL_KEY` 
 - Pengelompokan berita membandingkan judul utama dan judul dari penerbit yang telah masuk ke grup, mewajibkan sedikitnya dua token topik yang sama, membatasi penggabungan ke kategori yang sama, dan menolak artikel dengan jarak waktu lebih dari 72 jam.
 - Cache berita dinaikkan ke versi v6 agar hasil klasifikasi dan pengelompokan baru dihitung ulang pada browser.
 - Pemeriksaan sintaks JavaScript frontend lulus; data klasifikasi aktual tetap perlu ditinjau dari browser setelah RSS berhasil dimuat.
+
+
+### Berita populer, terbaru, dan rekomendasi topik (27 November 2026)
+
+- Beranda menampilkan daftar **Terpopuler** berdasarkan skor editorial internal yang memadukan kebaruan, jumlah penerbit berbeda yang cocok, dan ketersediaan cuplikan. Ini bukan metrik jumlah klik atau pembaca karena data analitik pengunjung tidak dikumpulkan.
+- Bagian **Berita terbaru** diurutkan berdasarkan waktu publikasi yang tersedia pada feed RSS.
+- Bagian **Jelajahi kategori** menyediakan tampilan pilihan artikel per kompetisi/topik di dalam beranda tanpa mengarahkan pembaca ke situs penyedia.
+- Rekomendasi artikel terkait mencoba mencari topik yang sama dengan memakai kata-kata dari judul artikel terlebih dahulu, lalu menggunakan feed kategori sebagai cadangan. Ini dapat menemukan berita tentang klub/pemain yang sama jika nama mereka tercantum dalam judul atau hasil RSS.
+- Artikel rekomendasi meneruskan kategori editorial, cuplikan sumber, dan tautan atribusi ke halaman artikel Mailnews.
+- Pemeriksaan sintaks JavaScript halaman utama dan artikel lulus. Ketersediaan RSS dan kecocokan rekomendasi tetap bergantung pada hasil feed langsung.
