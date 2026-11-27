@@ -125,6 +125,15 @@ export default {
       }
       params.set("fixture", fixture);
       cacheSeconds = 20;
+    } else if (path === "/players") {
+      const search = (url.searchParams.get("search") || "").trim();
+      const season = url.searchParams.get("season");
+      if (search.length < 3 || search.length > 60 || !/^\d{4}$/.test(season || "")) {
+        return json({ error: "search (3–60 karakter) dan season (YYYY) wajib." }, 400, origin);
+      }
+      params.set("search", search);
+      params.set("season", season);
+      cacheSeconds = 3600;
     } else if (path === "/leagues") {
       const search = (url.searchParams.get("search") || "").trim();
       if (search.length < 3 || search.length > 60) {
