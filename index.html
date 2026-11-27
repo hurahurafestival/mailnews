@@ -54,6 +54,31 @@
 </section><footer class="footer"><span>© <span id="year"></span> mailnews. Dibuat untuk pecinta sepak bola.</span><span>Sumber berita: Google News RSS melalui RSS2JSON. Hak cipta konten milik penerbit masing-masing.</span></footer>
 </main></div><script src="assets/club-logos.js"></script>
 <script>
+const NEWS_IMAGE_API='https://mailnews-footbal-api.hurahurafestibal.workers.dev/news-image';
+const NEWS_IMAGE_CACHE_KEY='mailnews-news-image-cache-v1';
+async function enrichMissingImages(items){
+ let cache={};try{cache=JSON.parse(localStorage.getItem(NEWS_IMAGE_CACHE_KEY)||'{}')||{}}catch{}
+ const now=Date.now(),targets=items.filter(a=>!a.image&&a.url&&!cache[a.url]).slice(0,12);
+ let changed=false;
+ for(let i=0;i<targets.length;i+=3){
+  await Promise.all(targets.slice(i,i+3).map(async article=>{
+   const urls=[article.url,...(article.sources||[]).map(s=>s.url)].filter(Boolean);
+   for(const sourceUrl of [...new Set(urls)]){
+    try{
+     const endpoint=NEWS_IMAGE_API+'?url='+encodeURIComponent(sourceUrl);
+     const response=await fetch(endpoint,{signal:AbortSignal.timeout(8000),cache:'force-cache'});
+     if(!response.ok)continue;
+     const data=await response.json();
+     if(data.image&&/^https:\\/\\//i.test(data.image)){article.image=data.image;changed=true;break;}
+    }catch{}
+   }
+   cache[article.url]={image:article.image||'',checkedAt:now};
+  }));
+ }
+ Object.keys(cache).forEach(key=>{if(!cache[key]?.checkedAt||now-cache[key].checkedAt>7*86400000)delete cache[key]});
+ try{localStorage.setItem(NEWS_IMAGE_CACHE_KEY,JSON.stringify(cache))}catch{}
+ return changed;
+}
 const feeds=[
 {category:'Indonesia',q:'sepak bola Liga 1 Indonesia klub when:7d',outlets:['sepak bola Indonesia site:bola.kompas.com when:7d','sepak bola Indonesia site:sport.detik.com when:7d','sepak bola Indonesia site:antaranews.com when:7d'],direct:[{name:'ANTARA Sepak Bola Indonesia',url:'https://www.antaranews.com/rss/sepakbola-liga-indonesia.xml'},{name:'ANTARA Sepak Bola',url:'https://www.antaranews.com/rss/sepakbola.xml'},{name:'Detik Sport',url:'https://rss.detik.com/index.php/sepakbola'},{name:'Okezone Bola',url:'https://sindikasi.okezone.com/index.php/rss/14/RSS2.0'}]},
 {category:'Timnas Indonesia',q:'Timnas Indonesia sepak bola when:7d',outlets:['Timnas Indonesia site:pssi.org when:7d','Timnas Indonesia site:antaranews.com when:7d','Timnas Indonesia site:bola.kompas.com when:7d'],direct:[{name:'ANTARA Sepak Bola Internasional',url:'https://www.antaranews.com/rss/sepakbola-internasional.xml'},{name:'BBC Sport Football',url:'https://feeds.bbci.co.uk/sport/football/rss.xml'}]},
@@ -191,12 +216,13 @@ async function loadNews(force=false){
  try{
   if(cached?.items?.length){
    articles=cached.items;newsLastUpdated=cached.savedAt||null;render();
-   if(!force&&Date.now()-new Date(cached.savedAt).getTime()<NEWS_CACHE_TTL)return;
+   if(!force&&Date.now()-new Date(cached.savedAt).getTime()<NEWS_CACHE_TTL){const changed=await enrichMissingImages(articles);if(changed){try{localStorage.setItem(NEWS_CACHE_KEY,JSON.stringify({savedAt:cached.savedAt,items:articles.slice(0,150)}))}catch{}render()}return;}
   }
   const results=await Promise.allSettled(feeds.map(loadFeed));
   const failed=results.filter(x=>x.status==='rejected').length;
   const fresh=normalizeArticles(results.flatMap(x=>x.status==='fulfilled'?x.value:[]));
   if(!fresh.length)throw Error('Sumber berita belum dapat diakses');
+  await enrichMissingImages(fresh);
   articles=fresh;newsLastUpdated=new Date().toISOString();
   try{localStorage.setItem(NEWS_CACHE_KEY,JSON.stringify({savedAt:newsLastUpdated,items:articles.slice(0,150)}))}catch{}
   render();
