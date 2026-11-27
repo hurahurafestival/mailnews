@@ -103,3 +103,11 @@ Worker menerima filter `/fixtures?live=all&league=ID`; Secret `APIFOOTBALL_KEY` 
 - Cache berita versi baru menjaga berita terakhir tetap tampil ketika penyedia RSS gagal diakses; label waktu menunjukkan kapan data terakhir berhasil diperbarui.
 - Penggabungan berita menghindari penghitungan ganda dari URL atau nama penerbit yang sama. Jumlah sumber yang tampil merujuk pada penerbit berbeda yang berhasil dicocokkan, bukan jumlah semua artikel di internet.
 - Pemeriksaan sintaks JavaScript lulus. Pembaruan live pada GitHub Pages dan ketersediaan layanan RSS tetap perlu diuji dari browser pengguna.
+
+
+### Penyempurnaan rangkuman editorial (27 November 2026)
+
+- Rangkuman artikel kini mengekstrak kalimat-kalimat yang tersedia dari cuplikan RSS, bukan mengisi paragraf dengan teks penjelas berulang ketika sumber pembanding tidak tersedia.
+- Kalimat duplikat disaring sebelum disusun. Paragraf pembuka mengambil cuplikan pertama, sedangkan paragraf berikutnya diberi atribusi penerbit masing-masing.
+- Rangkuman memuat maksimal lima paragraf dan menyertakan catatan bahwa bahan berasal dari cuplikan RSS, bukan verifikasi atau salinan artikel lengkap. Jumlah paragraf dapat lebih sedikit bila sumber tidak menyediakan isi yang memadai.
+- Pemeriksaan sintaks JavaScript lulus. Kualitas hasil akhir tetap bergantung pada isi dan bahasa cuplikan yang diberikan masing-masing penerbit.
