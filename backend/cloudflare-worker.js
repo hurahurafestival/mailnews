@@ -31,6 +31,82 @@ function validDate(value) {
     !Number.isNaN(Date.parse(value + "T00:00:00Z"));
 }
 
+
+const NEWS_IMAGE_HOSTS = [
+  "antaranews.com", "detik.com", "okezone.com", "kompas.com",
+  "bbc.com", "bbc.co.uk", "theguardian.com", "skysports.com",
+  "espn.com", "news.google.com", "pssi.org"
+];
+function allowedNewsUrl(value) {
+  try {
+    const u = new URL(value);
+    return u.protocol === "https:" && (!u.port || u.port === "443") &&
+      !u.username && !u.password &&
+      NEWS_IMAGE_HOSTS.some(host => u.hostname === host || u.hostname.endsWith("." + host));
+  } catch { return false; }
+}
+function imageFromHtml(html, pageUrl) {
+  const tags = html.match(/<meta\b[^>]*>/gi) || [];
+  const candidates = [];
+  for (const tag of tags) {
+    const attrs = {};
+    tag.replace(/([a-zA-Z_:][-a-zA-Z0-9_:.]*)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/g,
+      (_, key, a, b, c) => { attrs[key.toLowerCase()] = a ?? b ?? c ?? ""; return ""; });
+    const key = (attrs.property || attrs.name || "").toLowerCase();
+    if (["og:image", "og:image:url", "twitter:image", "twitter:image:src"].includes(key) && attrs.content) {
+      candidates.push(attrs.content.replace(/&amp;/g, "&").replace(/&#0?39;/g, "'").replace(/&quot;/g, '"'));
+    }
+  }
+  for (const value of candidates) {
+    try {
+      const u = new URL(value, pageUrl);
+      if (u.protocol === "https:" && !/(?:1x1|pixel|spacer|favicon|tracking)/i.test(u.href)) return u.href;
+    } catch {}
+  }
+  return "";
+}
+async function resolveNewsImage(request, ctx, origin) {
+  const raw = new URL(request.url).searchParams.get("url") || "";
+  if (!allowedNewsUrl(raw)) return json({ error: "URL sumber tidak termasuk daftar penerbit yang diizinkan." }, 400, origin);
+  const cache = caches.default;
+  const cacheKey = new Request("https://mailnews-image-cache.invalid/?url=" + encodeURIComponent(raw), { method: "GET" });
+  const cached = await cache.match(cacheKey);
+  if (cached) {
+    const headers = new Headers(cached.headers);
+    Object.entries(corsHeaders(origin)).forEach(([k, v]) => headers.set(k, v));
+    headers.set("X-Mailnews-Cache", "HIT");
+    return new Response(cached.body, { status: cached.status, headers });
+  }
+  try {
+    let current = raw, response = null;
+    for (let hop = 0; hop <= 3; hop++) {
+      if (!allowedNewsUrl(current)) return json({ error: "Redirect sumber tidak diizinkan." }, 400, origin);
+      response = await fetch(current, {
+        redirect: "manual",
+        headers: { "User-Agent": "Mozilla/5.0 (compatible; Mailnews/1.0)", "Accept": "text/html,application/xhtml+xml" },
+        signal: AbortSignal.timeout(7000)
+      });
+      if ([301, 302, 303, 307, 308].includes(response.status)) {
+        const location = response.headers.get("Location");
+        if (!location || hop === 3) break;
+        current = new URL(location, current).href;
+        continue;
+      }
+      break;
+    }
+    if (!response || !response.ok || !/text\/html|application\/xhtml\+xml/i.test(response.headers.get("Content-Type") || "")) {
+      return json({ image: "", reason: "Halaman penerbit tidak menyediakan HTML yang dapat dibaca." }, 200, origin, { "Cache-Control": "public, max-age=0, s-maxage=21600" });
+    }
+    const html = (await response.text()).slice(0, 1500000);
+    const image = imageFromHtml(html, current);
+    const result = json({ image, page: current, provider: "metadata halaman penerbit" }, 200, origin, { "Cache-Control": "public, max-age=0, s-maxage=86400" });
+    ctx.waitUntil(cache.put(cacheKey, result.clone()));
+    return result;
+  } catch {
+    return json({ image: "", reason: "Gambar belum dapat diambil dari halaman penerbit." }, 200, origin, { "Cache-Control": "public, max-age=0, s-maxage=21600" });
+  }
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -46,6 +122,8 @@ export default {
       return json({ error: "Origin not allowed" }, 403, origin);
     }
     const path = "/" + url.pathname.split("/").filter(Boolean).join("/");
+
+    if (path === "/news-image") return resolveNewsImage(request, ctx, origin);
 
     // Official AFC fallback for Indonesian domestic league standings.
     // This route is independent of the API-Football subscription/key.
