@@ -39,10 +39,43 @@ $('sourceList').innerHTML=sources.map((x,i)=>{let safe='';try{const u=new URL(x.
 const d=date?new Date(date):null;$('meta').textContent=(d&&!isNaN(d)?d.toLocaleString('id-ID',{dateStyle:'long',timeStyle:'short'}):'Waktu terbit tidak tersedia')+' · Ringkasan mailnews';
 if(img){$('cover').src=img;$('cover').hidden=false;$('cover').onerror=()=> $('cover').hidden=true}
 
-const queries={'Indonesia':'sepak bola Liga 1 Indonesia klub','Premier League':'English Premier League football','La Liga':'Spanish La Liga football','Serie A':'Italian Serie A football','Bundesliga':'German Bundesliga football','Liga Champions':'UEFA Champions League football','Transfer':'transfer pemain sepak bola football transfer'};
-function detailUrl(a){return 'article.html?'+new URLSearchParams({title:a.title||'',description:a.description||'',url:a.url||'',image:a.image||'',category:cat,date:a.pubDate||'',paragraphs:JSON.stringify([plain(a.description||''),'Cuplikan berita terkait dimuat dari '+cat+'.','Buka tautan penerbit untuk membaca rincian dan pembaruan lengkap.'])}).toString()}
+const queries={'Indonesia':'sepak bola Liga 1 Indonesia klub','Premier League':'English Premier League football','La Liga':'Spanish La Liga football','Serie A':'Italian Serie A football','Bundesliga':'German Bundesliga football','Liga Champions':'UEFA Champions League football','Transfer':'transfer pemain sepak bola football'};
+function relatedEditorialType(text){
+ const s=String(text||'').toLowerCase();
+ if(/\\b(transfer|bursa transfer|resmi gabung|pinjam|kontrak baru|rekrut|signing|loan)\\b/.test(s))return 'Transfer';
+ if(/\\b(analisis|analysis|taktik|tactical|preview|prediksi|evaluasi|ulasan|review|strategi)\\b/.test(s))return 'Analisis Pertandingan';
+ if(/\\b(klub|skuad|pelatih|manajer|cedera|pemain absen|persib|persija|arema|persebaya|real madrid|barcelona|arsenal|chelsea|liverpool|manchester)\\b/.test(s))return 'Berita Klub';
+ return 'Berita Utama';
+}
+function detailUrl(a){
+ const description=plain(a.description||'');
+ const source={name:a.source||'Google News RSS',title:a.title||'',description,url:a.url||'',date:a.pubDate||''};
+ const paragraphs=[description||'Cuplikan isi belum disediakan oleh feed penerbit.','Catatan: halaman rekomendasi ini dibuat dari metadata dan cuplikan RSS. Buka sumber asli untuk membaca laporan lengkap dan konteks terbaru.'];
+ return 'article.html?'+new URLSearchParams({title:a.title||'',description,url:a.url||'',image:a.image||'',category:cat,date:a.pubDate||'',sources:JSON.stringify(a.url?[source]:[]),paragraphs:JSON.stringify(paragraphs),editorialType:relatedEditorialType((a.title||'')+' '+description)}).toString();
+}
 function plain(s){const e=document.createElement('div');e.innerHTML=s||'';return(e.textContent||'').trim()}
-async function loadRelated(){const q=queries[cat]||'berita sepak bola terbaru';const rss='https://news.google.com/rss/search?q='+encodeURIComponent(q)+'&hl=id&gl=ID&ceid=ID:id';const api='https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(rss);try{const r=await fetch(api);if(!r.ok)throw Error();const data=await r.json();if(data.status!=='ok')throw Error();const items=(data.items||[]).filter(x=>plain(x.title)!==title).slice(0,5);if(!items.length)throw Error();$('related').className='';$('related').innerHTML=items.map(x=>{let host='Sumber berita';try{host=new URL(x.link).hostname.replace(/^www\./,'')}catch{}return '<div class="related"><a href="'+esc(detailUrl({title:plain(x.title),description:plain(x.description).slice(0,350),url:x.link,pubDate:x.pubDate}))+'">'+esc(plain(x.title))+'</a><small>'+esc(host)+' · '+esc(x.pubDate?new Date(x.pubDate).toLocaleDateString('id-ID'):'Berita terbaru')+'</small></div>'}).join('')}catch{$('related').className='loading';$('related').textContent='Berita terkait belum tersedia. Coba muat ulang halaman nanti.'}}
+async function loadRelated(){
+ const topic=title.split(/\\s+/).filter(x=>x.length>2).slice(0,9).join(' ');
+ const queriesToTry=[(topic+' sepak bola').trim(),queries[cat]||'berita sepak bola terbaru'];
+ try{
+  let items=[];
+  for(const q of queriesToTry){
+   const rss='https://news.google.com/rss/search?q='+encodeURIComponent(q)+'&hl=id&gl=ID&ceid=ID:id';
+   const api='https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(rss);
+   const r=await fetch(api);if(!r.ok)continue;const data=await r.json();if(data.status!=='ok')continue;
+   items=(data.items||[]).filter(x=>plain(x.title)!==title);
+   if(items.length)break;
+  }
+  if(!items.length)throw Error('Tidak ada berita serupa');
+  const seen=new Set();items=items.filter(x=>{const k=plain(x.title).toLowerCase();if(!k||seen.has(k))return false;seen.add(k);return true}).slice(0,6);
+  $('related').className='';
+  $('related').innerHTML=items.map(x=>{
+   let host='Sumber berita';try{host=new URL(x.link).hostname.replace(/^www\\./,'')}catch{}
+   const summary=plain(x.description).slice(0,260),link=detailUrl({title:plain(x.title),description:summary,url:x.link,pubDate:x.pubDate,source:host});
+   return '<div class="related"><a href="'+esc(link)+'">'+esc(plain(x.title))+'</a><small>'+esc(host)+' · '+esc(x.pubDate?new Date(x.pubDate).toLocaleDateString('id-ID'):'Berita terbaru')+'</small></div>';
+  }).join('');
+ }catch{$('related').className='loading';$('related').textContent='Rekomendasi berdasarkan topik, klub, atau pemain belum tersedia. Coba muat ulang halaman nanti.'}
+}
 $('year').textContent=new Date().getFullYear();
 const saved=localStorage.getItem('mailnews-theme')||'dark';document.documentElement.dataset.theme=saved;
 $('theme').onclick=()=>{const t=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=t;localStorage.setItem('mailnews-theme',t)};
