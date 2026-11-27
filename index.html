@@ -41,7 +41,7 @@
 </div>
 <div id="standingsTable" class="news-grid"></div>
 <p style="color:var(--muted);font-size:11px">Klasemen memakai tabel musim berjalan ESPN. Saat panel klasemen terbuka, Mailnews memeriksa skor setiap 1 menit dan memuat ulang tabel saat mendeteksi pertandingan selesai; pembaruan cadangan berjalan setiap 5 menit. Data diperbarui hanya setelah penyedia menerbitkan hasilnya. Sumber utama: ESPN. Bundesliga memiliki sumber cadangan OpenLigaDB jika ESPN gagal; data OpenLigaDB dikelola komunitas dan dapat terlambat. Kompetisi yang tidak memiliki data tetap ditandai belum tersedia.</p>
-</section><section id="newsSection"><div class="section-head"><h2>Berita terbaru</h2><small id="resultCount">Memuat berita…</small></div>
+</section><section id="newsSection"><div class="section-head"><h2>Berita terbaru</h2><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><small id="resultCount">Memuat berita…</small><button class="filter" id="refreshNews" type="button">↻ Perbarui berita</button></div></div>
 <div class="filters" id="filters"><button class="filter active" data-filter="Semua">Semua berita</button><button class="filter" data-filter="Indonesia">Indonesia</button><button class="filter" data-filter="Premier League">Premier League</button><button class="filter" data-filter="La Liga">La Liga</button><button class="filter" data-filter="Serie A">Serie A</button><button class="filter" data-filter="Bundesliga">Bundesliga</button><button class="filter" data-filter="Liga Champions">Liga Champions</button><button class="filter" data-filter="Transfer">Transfer</button></div>
 <div class="news-grid" id="newsGrid"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
 </section><footer class="footer"><span>© <span id="year"></span> mailnews. Dibuat untuk pecinta sepak bola.</span><span>Sumber berita: Google News RSS melalui RSS2JSON. Hak cipta konten milik penerbit masing-masing.</span></footer>
@@ -85,7 +85,8 @@ async function loadFeed(feed){
  }));
  return results.flatMap(x=>x.status==='fulfilled'?x.value:[]);
 }
-const NEWS_CACHE_KEY='mailnews-news-cache-v4',NEWS_CACHE_TTL=15*60*1000;
+const NEWS_CACHE_KEY='mailnews-news-cache-v5',NEWS_CACHE_TTL=15*60*1000;
+let newsRefreshBusy=false,newsLastUpdated=null;
 function titleTokens(value){
  const stop=new Set(['yang','dan','dari','untuk','dengan','the','and','for','with','saat','ini','itu','resmi','jadi','bola','football','sepak']);
  return String(value||'').toLowerCase().replace(/[^a-z0-9 ]/g,' ').split(/\s+/).filter(x=>x.length>2&&!stop.has(x));
@@ -102,7 +103,7 @@ function normalizeArticles(items){
   const match=groups.find(g=>g.category===item.category&&(g.sources.some(x=>x.url===item.url)||titleSimilarity(g.title,item.title)>=0.58));
   const source={name:item.source||'Penerbit berita',title:item.title,description:item.description||'',url:item.url,date:item.date||''};
   if(match){
-   if(!match.sources.some(x=>x.url===source.url))match.sources.push(source);
+   if(!match.sources.some(x=>x.url===source.url)&&!match.sources.some(x=>x.name.toLowerCase()===source.name.toLowerCase()))match.sources.push(source);
    if(item.description&&!match.snippets.includes(item.description))match.snippets.push(item.description);
    if(item.image&&!match.image)match.image=item.image;
    if(new Date(item.date)>new Date(match.date)){match.date=item.date;match.title=item.title;}
@@ -131,7 +132,26 @@ function buildStoryParagraphs(g){
  return paragraphs.slice(0,5);
 }
 function readNewsCache(){try{const saved=JSON.parse(localStorage.getItem(NEWS_CACHE_KEY)||'null');return saved&&Array.isArray(saved.items)?saved:null}catch{return null}}
-async function loadNews(){const grid=$('#newsGrid'),cached=readNewsCache();if(cached?.items?.length){articles=cached.items;render();$('#resultCount').textContent='Berita tersimpan · diperbarui '+timeAgo(cached.savedAt);if(Date.now()-new Date(cached.savedAt).getTime()<NEWS_CACHE_TTL)return;}try{const results=await Promise.allSettled(feeds.map(loadFeed));const fresh=normalizeArticles(results.flatMap(x=>x.status==='fulfilled'?x.value:[]));if(!fresh.length)throw Error('Sumber berita belum dapat diakses');articles=fresh;try{localStorage.setItem(NEWS_CACHE_KEY,JSON.stringify({savedAt:new Date().toISOString(),items:articles.slice(0,100)}))}catch{}render();$('#resultCount').textContent=articles.length+' artikel · diperbarui otomatis';}catch(e){if(cached?.items?.length){articles=cached.items;render();$('#resultCount').textContent='Mode cache · '+timeAgo(cached.savedAt);return}grid.innerHTML='<div class="empty">Berita otomatis belum dapat dimuat saat ini.<br>Periksa koneksi internet lalu coba muat ulang halaman.<br><br><button class="filter active" onclick="loadNews()">Coba lagi</button></div>';$('#resultCount').textContent='Sumber belum tersedia';}}
+async function loadNews(force=false){
+ if(newsRefreshBusy)return;
+ newsRefreshBusy=true;
+ const grid=$('#newsGrid'),cached=readNewsCache();
+ try{
+  if(cached?.items?.length){
+   articles=cached.items;newsLastUpdated=cached.savedAt||null;render();
+   if(!force&&Date.now()-new Date(cached.savedAt).getTime()<NEWS_CACHE_TTL)return;
+  }
+  const results=await Promise.allSettled(feeds.map(loadFeed));
+  const fresh=normalizeArticles(results.flatMap(x=>x.status==='fulfilled'?x.value:[]));
+  if(!fresh.length)throw Error('Sumber berita belum dapat diakses');
+  articles=fresh;newsLastUpdated=new Date().toISOString();
+  try{localStorage.setItem(NEWS_CACHE_KEY,JSON.stringify({savedAt:newsLastUpdated,items:articles.slice(0,100)}))}catch{}
+  render();
+ }catch(e){
+  if(cached?.items?.length){articles=cached.items;newsLastUpdated=cached.savedAt||null;render();$('#resultCount').textContent='Mode cache · '+timeAgo(cached.savedAt);}
+  else{grid.innerHTML='<div class="empty">Berita otomatis belum dapat dimuat saat ini.<br>Periksa koneksi internet lalu coba muat ulang halaman.<br><br><button class="filter active" onclick="loadNews(true)">Coba lagi</button></div>';$('#resultCount').textContent='Sumber belum tersedia';}
+ }finally{newsRefreshBusy=false;}
+}
 function detailUrl(a){const p=new URLSearchParams({title:a.title,description:a.description,url:a.url,image:a.image||'',category:a.category,date:a.date||'',sources:JSON.stringify(a.sources||[]),synthesis:a.synthesis||'',paragraphs:JSON.stringify(a.paragraphs||[])});return 'article.html?'+p.toString()}
 function editorialScore(a){
  const ageHours=Math.max(0,(Date.now()-new Date(a.date).getTime())/3600000);
@@ -159,7 +179,7 @@ function renderEditorialPicks(){
  if(!ranked.length){box.innerHTML='<div class="empty">Pilihan berita akan muncul setelah feed tersedia.</div>';return}
  box.innerHTML=ranked.map((a,i)=>'<article class="editorial-card">'+'<a class="editorial-thumb" href="'+esc(detailUrl(a))+'"><img loading="lazy" src="'+esc(a.image||NEWS_FALLBACK_IMAGE)+'" alt="'+(a.image?'':'Foto ilustrasi sepak bola')+'" onerror="this.parentElement.style.display=\'none\'"></a>'+'<span class="editorial-rank">'+(i+2)+'</span><div><h3><a class="article-link" href="'+esc(detailUrl(a))+'">'+esc(a.title)+'</a></h3><p>'+esc(a.description||'Ringkasan singkat belum tersedia dari feed.')+'</p><small>'+esc(a.category)+' · '+esc(timeAgo(a.date))+' · Sumber: '+esc(a.source)+'</small></div></article>').join('');
 }
-function render(){renderFeatured();renderEditorialPicks();const list=articles.filter(a=>(active==='Semua'||a.category===active)&&(a.title+' '+a.description+' '+a.category).toLowerCase().includes(query.toLowerCase()));$('#resultCount').textContent=list.length+' artikel';const grid=$('#newsGrid');if(!list.length){grid.innerHTML='<div class="empty">Tidak ada berita yang cocok. Coba kata kunci atau kategori lain.</div>';return}grid.innerHTML=list.slice(0,60).map(a=>'<article class="news-card"><div class="news-image">'+'<img loading="lazy" src="'+esc(a.image||NEWS_FALLBACK_IMAGE)+'" alt="'+(a.image?'':'Foto ilustrasi sepak bola')+'" onerror="this.style.display=\'none\'">'+'<span class="tag">'+esc(a.category)+'</span></div><div class="news-body"><h3><a class="article-link" href="'+esc(detailUrl(a))+'">'+esc(a.title)+'</a></h3><p>'+esc(a.description)+'</p><div class="news-meta"><span>'+esc(timeAgo(a.date))+'</span><span title="Sumber berita">Sumber: '+esc(a.source)+'</span></div></div></article>').join('')}
+function render(){renderFeatured();renderEditorialPicks();const list=articles.filter(a=>(active==='Semua'||a.category===active)&&(a.title+' '+a.description+' '+a.category).toLowerCase().includes(query.toLowerCase()));$('#resultCount').textContent=list.length+' artikel'+(newsLastUpdated?' · diperbarui '+timeAgo(newsLastUpdated):'');const grid=$('#newsGrid');if(!list.length){grid.innerHTML='<div class="empty">Tidak ada berita yang cocok. Coba kata kunci atau kategori lain.</div>';return}grid.innerHTML=list.slice(0,60).map(a=>'<article class="news-card"><div class="news-image">'+'<img loading="lazy" src="'+esc(a.image||NEWS_FALLBACK_IMAGE)+'" alt="'+(a.image?'':'Foto ilustrasi sepak bola')+'" onerror="this.style.display=\'none\'">'+'<span class="tag">'+esc(a.category)+'</span></div><div class="news-body"><h3><a class="article-link" href="'+esc(detailUrl(a))+'">'+esc(a.title)+'</a></h3><p>'+esc(a.description)+'</p><div class="news-meta"><span>'+esc(timeAgo(a.date))+'</span><span title="Jumlah penerbit yang cocok">'+(a.sources?.length||1)+' sumber: '+esc(a.source)+'</span></div></div></article>').join('')}
 function setFilter(f){active=f;document.querySelectorAll('[data-filter]').forEach(b=>b.classList.toggle('active',b.dataset.filter===f));render();$('#sidebar').classList.remove('open');$('#overlay').classList.remove('show')}
 document.querySelectorAll('[data-filter]').forEach(b=>b.addEventListener('click',()=>{showView('news');setFilter(b.dataset.filter)}));
 function showView(view){$('#matchCenter').hidden=view!=='matches';$('#standingsPanel').hidden=view!=='standings';$('#newsSection').hidden=view!=='news';$('#editorialSection').hidden=view!=='news';document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));$('#sidebar').classList.remove('open');$('#overlay').classList.remove('show');if(view==='matches')loadMatches(currentLeague);if(view==='standings')loadStandings(currentStanding)}
@@ -618,5 +638,8 @@ $('#searchInput').addEventListener('input',e=>{query=e.target.value;render()});
 function setTheme(t){document.documentElement.dataset.theme=t;localStorage.setItem('mailnews-theme',t);$('#themeBtn').textContent=t==='dark'?'☼':'☾'}
 setTheme(localStorage.getItem('mailnews-theme')||'dark');$('#themeBtn').addEventListener('click',()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark'));
 $('#menuBtn').addEventListener('click',()=>{$('#sidebar').classList.add('open');$('#overlay').classList.add('show')});$('#overlay').addEventListener('click',()=>{$('#sidebar').classList.remove('open');$('#overlay').classList.remove('show')});
-$('#today').textContent=new Intl.DateTimeFormat('id-ID',{weekday:'short',day:'numeric',month:'short'}).format(new Date());$('#year').textContent=new Date().getFullYear();loadNews();
+$('#today').textContent=new Intl.DateTimeFormat('id-ID',{weekday:'short',day:'numeric',month:'short'}).format(new Date());$('#year').textContent=new Date().getFullYear();$('#refreshNews')?.addEventListener('click',()=>loadNews(true));
+setInterval(()=>{if(document.visibilityState==='visible')loadNews(true)},NEWS_CACHE_TTL);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&(!newsLastUpdated||Date.now()-new Date(newsLastUpdated).getTime()>=NEWS_CACHE_TTL))loadNews(true)});
+loadNews();
 </script></body></html>
