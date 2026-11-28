@@ -15,7 +15,7 @@ Buka https://hurahurafestival.github.io/mailnews/ atau jalankan `index.html` mel
 - Cache berita otomatis selama 10 menit dan fallback ke berita tersimpan saat koneksi/API bermasalah. Feed dibatasi waktu 12 detik per permintaan; kegagalan kategori ditampilkan sebagai status parsial.
 - Sorotan berita otomatis berdasarkan kebaruan dan jumlah penerbit berbeda yang cocok; bagian ini bukan peringkat jumlah pembaca/klik. Berita terbaru dan filter Timnas Indonesia serta sepak bola dunia tersedia di beranda.
 - Pengelompokan laporan bertopik serupa dari beberapa penerbit agar satu peristiwa tidak memenuhi daftar sebagai berita duplikat.
-- Rangkuman lintas sumber yang dirangkai dari judul dan cuplikan RSS, disertai atribusi serta tautan masing-masing penerbit.
+- Rangkuman lintas sumber yang mengambil cuplikan RSS terpanjang yang tersedia (hingga 1.600 karakter per sumber), menghapus kalimat yang sangat mirip, lalu menyusun hingga empat paragraf isi dan satu catatan redaksi. Setiap detail tetap diatribusikan ke penerbit; jumlah paragraf tidak dipaksakan bila cuplikan tidak cukup.
 - Rekomendasi berita terkait pada halaman artikel agar pembaca tetap menjelajah di mailnews.
 - Halaman ringkasan artikel dengan tautan ke penerbit asli.
 - Pusat pertandingan menggunakan API-Football melalui Cloudflare Worker untuk liga yang terpetakan, dengan ESPN sebagai fallback bila tersedia.
