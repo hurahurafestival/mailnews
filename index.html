@@ -59,9 +59,9 @@ const NEWS_IMAGE_CACHE_KEY='mailnews-news-image-cache-v1';
 async function enrichMissingImages(items){
  let cache={};try{cache=JSON.parse(localStorage.getItem(NEWS_IMAGE_CACHE_KEY)||'{}')||{}}catch{}
  const now=Date.now();
+ let changed=false;
  items.forEach(a=>{const saved=cache[a.url];if(!a.image&&saved?.image&&saved.checkedAt&&now-saved.checkedAt<7*86400000){a.image=saved.image;changed=true;}});
  const targets=items.filter(a=>!a.image&&a.url&&!cache[a.url]).slice(0,12);
- let changed=false;
  for(let i=0;i<targets.length;i+=3){
   await Promise.all(targets.slice(i,i+3).map(async article=>{
    const urls=[article.url,...(article.sources||[]).map(s=>s.url)].filter(Boolean);
@@ -117,10 +117,16 @@ function imageFrom(item){
 }
 async function loadFeed(feed){
  const tasks=[...( [feed.q,...(feed.outlets||[])].filter(Boolean).map(query=>({kind:'search',query})) ),...(feed.direct||[]).map(source=>({kind:'direct',...source}))];
- const results=await Promise.allSettled(tasks.map(async task=>{
+ const results=new Array(tasks.length);
+ let cursor=0;
+ const workers=Array.from({length:Math.min(3,tasks.length)},async()=>{
+  while(cursor<tasks.length){
+   const index=cursor++,task=tasks[index];
+   try{
+    results[index]={status:'fulfilled',value:await (async()=>{
   const rss=task.kind==='search'?'https://news.google.com/rss/search?q='+encodeURIComponent(task.query)+'&hl=id&gl=ID&ceid=ID:id':task.url;
   const api='https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(rss);
-  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),9000);
   try{
    const res=await fetch(api,{signal:controller.signal});if(!res.ok)throw Error('RSS HTTP '+res.status);
    const data=await res.json();if(data.status!=='ok')throw Error('RSS response error');
@@ -132,8 +138,12 @@ async function loadFeed(feed){
     return {title,description:newsExcerpt(x),url:x.link,date:x.pubDate||'',image:imageFrom(x),category:feed.category,source};
    });
   }finally{clearTimeout(timer)}
- }));
- const items=results.flatMap(x=>x.status==='fulfilled'?x.value:[]);
+   })()};
+   }catch(error){results[index]={status:'rejected',reason:error}}
+  }
+ });
+ await Promise.all(workers);
+ const items=results.flatMap(x=>x?.status==='fulfilled'?x.value:[]);
  if(!items.length)throw Error('Tidak ada artikel dari feed '+feed.category);
  return items;
 }
@@ -241,11 +251,17 @@ async function loadNews(force=false){
   const failed=results.filter(x=>x.status==='rejected').length;
   const fresh=normalizeArticles(results.flatMap(x=>x.status==='fulfilled'?x.value:[]));
   if(!fresh.length)throw Error('Sumber berita belum dapat diakses');
-  await enrichMissingImages(fresh);
   articles=fresh;newsLastUpdated=new Date().toISOString();
   try{localStorage.setItem(NEWS_CACHE_KEY,JSON.stringify({savedAt:newsLastUpdated,items:articles.slice(0,150)}))}catch{}
   render();
-  if(failed)$('#resultCount').textContent=articles.length+' artikel · '+failed+' kategori sumber gagal · '+timeAgo(newsLastUpdated);
+  $('#resultCount').textContent=articles.length+' artikel'+(failed?' · '+failed+' kategori sumber gagal':'')+' · '+timeAgo(newsLastUpdated);
+  // Foto diperkaya setelah berita tampil agar proses gambar tidak menahan halaman di loading.
+  enrichMissingImages(fresh).then(changed=>{
+   if(changed){
+    try{localStorage.setItem(NEWS_CACHE_KEY,JSON.stringify({savedAt:newsLastUpdated,items:articles.slice(0,150)}))}catch{}
+    render();
+   }
+  }).catch(()=>{});
  }catch(e){
   if(cached?.items?.length){articles=cached.items;newsLastUpdated=cached.savedAt||null;render();$('#resultCount').textContent='Mode cache · '+timeAgo(cached.savedAt);}
   else{grid.innerHTML='<div class="empty">Berita otomatis belum dapat dimuat saat ini.<br>Periksa koneksi internet lalu coba muat ulang halaman.<br><br><button class="filter active" onclick="loadNews(true)">Coba lagi</button></div>';$('#resultCount').textContent='Sumber belum tersedia';}
