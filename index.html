@@ -129,7 +129,7 @@ async function loadFeed(feed){
     const author=cleanHtml(x.author||''),rawTitle=cleanHtml(x.title),titleSource=rawTitle.match(/\s[-–|]\s([^–—-]{2,60})$/);
     const title=task.kind==='search'&&titleSource?rawTitle.slice(0,titleSource.index).trim():rawTitle;
     const source=task.kind==='direct'?task.name:(author&&author.toLowerCase()!=='google news'?author:titleSource?titleSource[1]:host==='news.google.com'?'Penerbit melalui Google News':host||'Penerbit berita');
-    return {title,description:cleanHtml(x.description||x.content||'').slice(0,900),url:x.link,date:x.pubDate||'',image:imageFrom(x),category:feed.category,source};
+    return {title,description:newsExcerpt(x),url:x.link,date:x.pubDate||'',image:imageFrom(x),category:feed.category,source};
    });
   }finally{clearTimeout(timer)}
  }));
@@ -137,7 +137,7 @@ async function loadFeed(feed){
  if(!items.length)throw Error('Tidak ada artikel dari feed '+feed.category);
  return items;
 }
-const NEWS_CACHE_KEY='mailnews-news-cache-v8',NEWS_CACHE_TTL=10*60*1000;
+const NEWS_CACHE_KEY='mailnews-news-cache-v9',NEWS_CACHE_TTL=10*60*1000;
 function titleTokens(value){
  const stop=new Set(['yang','dan','dari','untuk','dengan','the','and','for','with','saat','ini','itu','resmi','jadi','bola','football','sepak']);
  return String(value||'').toLowerCase().replace(/[^a-z0-9 ]/g,' ').split(/\s+/).filter(x=>x.length>2&&!stop.has(x));
@@ -179,36 +179,53 @@ function normalizeArticles(items){
   seenUrls.add(item.url);
  });
  return groups.map(g=>{
-  g.sources=g.sources.slice(0,5);g.description=g.snippets.slice(0,4).join(' • ').slice(0,900);
-  g.synthesis=g.sources.length>1?'Ringkasan menggabungkan cuplikan dari '+g.sources.length+' penerbit berbeda. Setiap laporan tetap memiliki atribusi dan tautan sumber.':'Hanya satu penerbit yang cocok ditemukan untuk topik ini. Mailnews tidak menambahkan fakta yang tidak ada di cuplikan.';
+  g.sources=g.sources.slice(0,5);g.description=g.snippets.slice(0,5).join(' • ').slice(0,1400);
+  g.synthesis=g.sources.length>1?'Rangkuman membandingkan cuplikan dari '+g.sources.length+' penerbit. Informasi yang berbeda dipisahkan dan setiap laporan tetap memiliki atribusi. Kesamaan topik bukan bukti bahwa seluruh detail telah terkonfirmasi.':'Hanya satu penerbit yang cocok ditemukan. Rangkuman dibatasi pada cuplikan tersebut dan belum memiliki pembanding independen.';
   g.editorialType=classifyEditorialType(g);g.paragraphs=buildStoryParagraphs(g);return g;
  }).sort((a,b)=>new Date(b.date)-new Date(a.date));
 }
 function buildStoryParagraphs(g){
- const clean=value=>String(value||'').replace(/<[^>]*>/g,' ').replace(/&nbsp;/gi,' ').replace(/&amp;/gi,'&').replace(/\s+/g,' ').trim();
- const split=value=>clean(value).split(/(?<=[.!?])\s+(?=[A-Z0-9“"‘])/).map(x=>x.trim()).filter(x=>x.length>35);
- const reports=(g.sources||[]).map(x=>({name:x.name||'Penerbit berita',sentences:split(x.description||'')})).filter(x=>x.sentences.length);
- const used=new Set(),paragraphs=[];
- const unique=items=>items.filter(sentence=>{const key=sentence.toLowerCase().replace(/[^a-z0-9\u00c0-\u024f]/g,'').slice(0,180);if(!key||used.has(key))return false;used.add(key);return true});
- if(!reports.length){
+ const clean=value=>String(value||'').replace(/<[^>]*>/g,' ').replace(/&nbsp;/gi,' ').replace(/&amp;/gi,'&').replace(/&#39;|&apos;/gi,"'").replace(/&quot;/gi,'"').replace(/\s+/g,' ').trim();
+ const split=value=>clean(value).replace(/([.!?])\s+(?=[A-ZÀ-Ý0-9“"‘])/g,'$1\n').split('\n').map(x=>x.trim()).filter(x=>x.length>35);
+ const words=value=>new Set(clean(value).toLowerCase().replace(/[^a-z0-9à-ÿ ]/gi,' ').split(/\s+/).filter(x=>x.length>2&&!['yang','dan','dari','untuk','dengan','pada','dalam','oleh','telah','akan','adalah','the','and','for','with'].includes(x)));
+ const duplicate=(a,b)=>{const aa=words(a),bb=words(b);if(!aa.size||!bb.size)return false;let n=0;aa.forEach(x=>{if(bb.has(x))n++});return n/Math.max(1,Math.min(aa.size,bb.size))>=.78};
+ const reports=(g.sources||[]).map(x=>({name:x.name||'Penerbit berita',title:clean(x.title),date:x.date||'',sentences:split(x.description||'')})).filter(x=>x.sentences.length);
+ const collected=[];
+ reports.forEach(report=>report.sentences.forEach(sentence=>{
+  if(!collected.some(item=>duplicate(item.text,sentence)))collected.push({text:sentence,source:report.name,date:report.date});
+ }));
+ const paragraphs=[];
+ if(!collected.length){
   const fallback=clean(g.description);
-  if(fallback)paragraphs.push(clean(g.title)+'. '+fallback);
-  else paragraphs.push(clean(g.title)+'. Feed penerbit belum menyediakan cuplikan isi yang dapat dirangkum.');
+  paragraphs.push(clean(g.title)+(fallback?'. '+fallback:' — feed penerbit belum menyediakan cuplikan isi yang cukup untuk menyusun uraian lebih lanjut.'));
  }else{
-  reports.slice(0,4).forEach((report,index)=>{
-   const sentences=unique(report.sentences);
-   for(let i=0;i<sentences.length&&paragraphs.length<4;i+=2){
-    const chunk=sentences.slice(i,i+2);
-    if(!chunk.length)continue;
-    if(index===0&&i===0)paragraphs.push(clean(g.title)+'. '+chunk.join(' '));
-    else if(index===0)paragraphs.push('Rincian lain dalam cuplikan '+report.name+': '+chunk.join(' '));
-    else paragraphs.push('Laporan '+report.name+' menambahkan: '+chunk.join(' '));
-   }
-  });
+  const primary=reports[0];
+  const first=collected.filter(x=>x.source===primary.name).slice(0,2);
+  if(first.length)paragraphs.push(clean(g.title)+'. '+first.map(x=>x.text).join(' '));
+  const remaining=collected.filter(x=>!first.includes(x));
+  const otherSources=[...new Set(remaining.map(x=>x.source))];
+  if(remaining.length){
+   const group=remaining.slice(0,2);
+   const label=group.every(x=>x.source===primary.name)?'Rincian tambahan dari cuplikan '+primary.name+': ':'Laporan pembanding dari '+[...new Set(group.map(x=>x.source))].join(' dan ')+': ';
+   paragraphs.push(label+group.map(x=>x.text).join(' '));
+  }
+  if(remaining.length>2){
+   const group=remaining.slice(2,4);
+   paragraphs.push('Informasi lain yang tercantum pada feed: '+group.map(x=>x.text).join(' '));
+  }
+  if(otherSources.length>1&&remaining.length>1){
+   const detail=remaining.slice(4,6);
+   if(detail.length)paragraphs.push('Cuplikan penerbit lain turut memuat: '+detail.map(x=>x.text).join(' '));
+  }
  }
  const timestamp=g.date?new Date(g.date).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'}):'waktu terbit tidak tersedia';
- paragraphs.push('Catatan redaksi: rangkuman disusun dari cuplikan RSS yang tersedia hingga '+timestamp+'. Jumlah dan isi laporan pembanding tercantum di bawah. Mailnews tidak mengakses keseluruhan artikel dan tidak menambahkan fakta yang tidak tercantum pada sumber.');
+ const excerptCount=reports.length;
+ paragraphs.push('Catatan redaksi: rangkuman ini disusun dari '+excerptCount+' penerbit yang menyediakan cuplikan RSS, hingga '+timestamp+'. Mailnews hanya merangkum informasi yang benar-benar tersedia pada cuplikan; ini bukan artikel penuh atau verifikasi independen. Jika cuplikan tidak cukup, jumlah paragraf dibuat lebih singkat agar tidak mengarang fakta.');
  return paragraphs.slice(0,5);
+}
+function newsExcerpt(item){
+ const candidates=[item.content,item['content:encoded'],item.description,item.summary].map(cleanHtml).map(x=>x.replace(/\s+/g,' ').trim()).filter(x=>x.length>45);
+ return [...new Set(candidates)].sort((a,b)=>b.length-a.length)[0]?.slice(0,1600)||'';
 }
 function readNewsCache(){try{const saved=JSON.parse(localStorage.getItem(NEWS_CACHE_KEY)||'null');return saved&&Array.isArray(saved.items)?saved:null}catch{return null}}
 async function loadNews(force=false){
