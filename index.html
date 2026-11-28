@@ -116,7 +116,8 @@ function imageFrom(item){
  return urls.map(x=>x.replace(/&amp;/g,'&').trim()).find(x=>/^https?:\/\//i.test(x)&&!/(?:1x1|pixel|spacer|tracking)/i.test(x))||'';
 }
 async function loadFeed(feed){
- const tasks=[...( [feed.q,...(feed.outlets||[])].filter(Boolean).map(query=>({kind:'search',query})) ),...(feed.direct||[]).map(source=>({kind:'direct',...source}))];
+ // Tiga kueri pencarian utama per kategori menjaga batas permintaan dan tetap mengambil beberapa penerbit.
+ const tasks=[...( [feed.q,...(feed.outlets||[])].filter(Boolean).slice(0,3).map(query=>({kind:'search',query})) )];
  const results=new Array(tasks.length);
  let cursor=0;
  const workers=Array.from({length:Math.min(3,tasks.length)},async()=>{
